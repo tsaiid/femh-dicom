@@ -41,7 +41,6 @@ def predict_image(img, model):
     return preds
 
 def do_predict(models, path):
-    results = []
     ds, img = read_dcm_to_image(path)
     for model in models:
         small_img = img.resize((model.height, model.width))
@@ -55,9 +54,10 @@ def do_predict(models, path):
         exam_time = ds.get('AcquisitionDate', None)
         small_img_arr = np.array(small_img.convert('RGB'))
         prob = predict_image(small_img_arr, model.obj)
-        results.append({'model_name': model.name,
-                        'model_ver': model.ver,
-                        'normal_probability': prob})
+        results = { 'acc_no': acc_no,
+                    'model_name': model.name,
+                    'model_ver': model.ver,
+                    'normal_probability': prob  }
 
     return results
 
@@ -80,14 +80,15 @@ def main():
             cxr_models.append(CxrModel(m['path'], w))
 
     path = sys.argv[1]
+    results = []
     if (isfile(path)):
-        results = do_predict(cxr_models, path)
+        results.append(do_predict(cxr_models, path))
     elif (isdir(path)):
         files = listdir(path)
         for f in files:
             fullpath = join(path, f)
             if isfile(fullpath):
-                results = do_predict(cxr_models, fullpath)
+                results.append(do_predict(cxr_models, fullpath))
 
     # print results or write to db
     print(results)
