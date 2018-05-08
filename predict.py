@@ -12,6 +12,9 @@ from os.path import isfile, isdir, join, expanduser
 import yaml
 from cxrmodel import CxrModel
 from dcmconv import get_LUT_value, get_PIL_mode, get_rescale_params
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from cxrdbcls import CxrNormalProbability
 
 def read_dcm_to_image(ds_or_file):
     if isinstance(ds_or_file, FileDataset):
@@ -55,9 +58,10 @@ def do_predict(models, path):
         small_img_arr = np.array(small_img.convert('RGB'))
         prob = predict_image(small_img_arr, model.obj)
         results = { 'acc_no': acc_no,
+                    'exam_time': exam_time,
                     'model_name': model.name,
                     'model_ver': model.ver,
-                    'normal_probability': prob  }
+                    'normal_probability': prob[0][0]  }
 
     return results
 
@@ -92,6 +96,17 @@ def main():
 
     # print results or write to db
     print(results)
+    engine = create_engine('sqlite:///cxr-normal-probability.db')
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    for r in results:
+        session.add(CxrNormalProbability(acc_no=r['acc_no'],
+                                         exam_time=r['exam_time'],
+                                         model_name=r['model_name'],
+                                         model_ver=r['model_ver'],
+                                         normal_probability=r['normal_probability']))
+        session.commit()
+    session.close()
 
 
 if __name__ == "__main__":
