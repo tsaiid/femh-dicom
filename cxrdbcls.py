@@ -15,7 +15,6 @@ class CxrNormalProbability(Base):
     #定义id,主键唯一,
     id = Column(Integer, primary_key=True, autoincrement=True)
     acc_no = Column(String(16),nullable=False)
-    exam_time = Column(DateTime(timezone=True), server_default=func.now())
     model_name = Column(String(16),nullable=False)
     model_ver = Column(String(16),nullable=False)
     normal_probability = Column(Float(),nullable=False)

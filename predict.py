@@ -58,7 +58,6 @@ def do_predict(models, path):
         small_img_arr = np.array(small_img.convert('RGB'))
         prob = predict_image(small_img_arr, model.obj)
         results = { 'acc_no': acc_no,
-                    'exam_time': exam_time,
                     'model_name': model.name,
                     'model_ver': model.ver,
                     'normal_probability': prob[0][0]  }
@@ -71,9 +70,7 @@ def main():
         sys.exit(1)
 
     # load cfg
-    home_dir = expanduser("~")
-    tmp_dir = 'Dropbox/Tmp/TF'
-    yml_path = join(home_dir, tmp_dir, 'cxr.yml')
+    yml_path = join('config', 'cxr.yml')
     with open(yml_path, 'r') as ymlfile:
         cfg = yaml.load(ymlfile)
 
@@ -96,12 +93,12 @@ def main():
 
     # print results or write to db
     print(results)
-    engine = create_engine('sqlite:///cxr-normal-probability.db')
+    db_path = cfg['sqlite']['path']
+    engine = create_engine('sqlite:///' + db_path)
     Session = sessionmaker(bind=engine)
     session = Session()
     for r in results:
         session.add(CxrNormalProbability(acc_no=r['acc_no'],
-                                         exam_time=r['exam_time'],
                                          model_name=r['model_name'],
                                          model_ver=r['model_ver'],
                                          normal_probability=r['normal_probability']))
