@@ -9,6 +9,9 @@ matplotlib = "*"
 opencv-python = "*"
 pillow = "*"
 deid = "*"
+sqlalchemy = "*"
+keras = "*"
+tensorflow = "*"
 
 [dev-packages]
 
