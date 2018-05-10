@@ -10,6 +10,7 @@ from PIL.ImageOps import invert
 import sys
 import time
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
+import errno
 
 # This function returns the data array values mapped to 0-256 using window/level parameters
 #	If provided it takes into account the DICOM flags:
@@ -85,7 +86,7 @@ def do_convert(filename, img_out_path):
     ds_rs = ds.RescaleSlope if 'RescaleSlope' in ds else None
     ds_uid = ds.SOPInstanceUID if 'SOPInstanceUID' in ds else None
     print(filename, "AccNo:", ds_an, "PI:", ds_pi, "WW:", ds_ww, "WC:", ds_wc, "RI:", ds_ri, "RS:", ds_rs)
-    img_out_fullpath = join(img_out_path, ds_uid + '.png')
+    img_out_fullpath = join(img_out_path, ds_an + '.png')
     if not exists(dirname(img_out_fullpath)):
         try:
             makedirs(dirname(img_out_fullpath))
@@ -95,7 +96,7 @@ def do_convert(filename, img_out_path):
 
     img = read_dcm_to_image(ds)
 
-    small_img = img.resize((224, 224))
+    small_img = img.resize((1024, 1024))
     small_img = small_img.convert('L')
 
     # MONOCHROME
