@@ -58,8 +58,10 @@ def do_predict(models, path):
         small_img_arr = np.array(small_img.convert('RGB'))
         prob = predict_image(small_img_arr, model.obj)
         results = { 'acc_no': acc_no,
-                    'model_name': model.name,
-                    'model_ver': model.ver,
+                    'model_name': model.model_name,
+                    'model_ver': model.model_ver,
+                    'weight_name': model.weight_name,
+                    'weight_ver': model.weight_ver,
                     'normal_probability': prob[0][0]  }
 
     return results
@@ -75,10 +77,7 @@ def main():
         cfg = yaml.load(ymlfile)
 
     # load all models
-    cxr_models = []
-    for m in cfg['model']:
-        for w in m['weight']:
-            cxr_models.append(CxrModel(m['path'], w))
+    cxr_models = [CxrModel(m, w) for m in cfg['model'] for w in m['weight']]
 
     path = sys.argv[1]
     results = []
@@ -93,6 +92,7 @@ def main():
 
     # print results or write to db
     print(results)
+    """
     db_path = cfg['sqlite']['path']
     engine = create_engine('sqlite:///' + db_path)
     Session = sessionmaker(bind=engine)
@@ -104,7 +104,7 @@ def main():
                                          normal_probability=r['normal_probability']))
         session.commit()
     session.close()
-
+    """
 
 if __name__ == "__main__":
     main()
