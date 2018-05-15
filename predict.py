@@ -16,6 +16,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from cxrdbcls import CxrNormalProbability
 
+engine = None
+
 def read_dcm_to_image(ds_or_file):
     if isinstance(ds_or_file, FileDataset):
         ds = ds_or_file
@@ -44,8 +46,19 @@ def predict_image(img, model):
     return preds
 
 def do_predict(models, path):
+    result = None
     ds, img = read_dcm_to_image(path)
     for model in models:
+        # check if exists
+        acc_no = ds.get('AccessionNumber', None)
+        model_name = model.model_name
+        model_ver = model.model_ver
+        weight_name = model.weight_name
+        weight_ver = model.weight_ver
+        is_exist = check_if_pred_exists(acc_no, model_name, model_ver, weight_name, weight_ver)
+        if is_exist:
+            continue
+
         small_img = img.resize((model.height, model.width))
         small_img = small_img.convert('L')
 
@@ -53,18 +66,34 @@ def do_predict(models, path):
         if ds.PhotometricInterpretation == 'MONOCHROME1':
             small_img = invert(small_img)
 
-        acc_no = ds.get('AccessionNumber', None)
         exam_time = ds.get('AcquisitionDate', None)
         small_img_arr = np.array(small_img.convert('RGB'))
         prob = predict_image(small_img_arr, model.obj)
-        results = { 'acc_no': acc_no,
-                    'model_name': model.model_name,
-                    'model_ver': model.model_ver,
-                    'weight_name': model.weight_name,
-                    'weight_ver': model.weight_ver,
-                    'normal_probability': prob[0][0]  }
+        result = { 'acc_no': acc_no,
+                    'model_name': model_name,
+                    'model_ver': model_ver,
+                    'weight_name': weight_name,
+                    'weight_ver': weight_ver,
+                    'probability': prob[0][0]  }
+    return result
 
-    return results
+def check_if_pred_exists(acc_no, model_name, model_ver, weight_name, weight_ver):
+    global engine
+    query_str = 'select 1 ' \
+                'from "ML_PREDICTIONS" ' \
+                'where ACCNO = "{acc_no}" ' \
+                '  and MODEL_NAME = "{model_name}" ' \
+                '  and MODEL_VER = "{model_ver}" ' \
+                '  and WEIGHTS_NAME = "{weight_name}" ' \
+                '  and WEIGHTS_VER = "{weight_ver}";'.format(acc_no=acc_no,
+                                                             model_name=model_name,
+                                                             model_ver=model_ver,
+                                                             weight_name=weight_name,
+                                                             weight_ver=weight_ver)
+    result = engine.execute(query_str)
+    is_exist = result.fetchone()
+    result.close()
+    return True if is_exist else None
 
 def main():
     if len(sys.argv) is not 2:
@@ -76,22 +105,32 @@ def main():
     with open(yml_path, 'r') as ymlfile:
         cfg = yaml.load(ymlfile)
 
+    # init db engine
+    global engine
+    db_path = cfg['sqlite']['path']
+    engine = create_engine('sqlite:///' + db_path)
+
     # load all models
     cxr_models = [CxrModel(m, w) for m in cfg['model'] for w in m['weight']]
 
     path = sys.argv[1]
     results = []
     if (isfile(path)):
-        results.append(do_predict(cxr_models, path))
+        result = do_predict(cxr_models, path)
+        if result:
+            results.append(result)
     elif (isdir(path)):
         files = listdir(path)
         for f in files:
             fullpath = join(path, f)
             if isfile(fullpath):
-                results.append(do_predict(cxr_models, fullpath))
+                result = do_predict(cxr_models, fullpath)
+                if result:
+                    results.append(result)
 
     # print results or write to db
     print(results)
+    print(len(results))
     """
     db_path = cfg['sqlite']['path']
     engine = create_engine('sqlite:///' + db_path)
