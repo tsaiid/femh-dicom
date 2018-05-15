@@ -1,7 +1,7 @@
 from os.path import join
 from sqlalchemy import create_engine
 import yaml
-from cxrdbcls import CxrNormalProbability
+from mldbcls import MLPrediction
 
 def main():
     # load cfg
@@ -12,7 +12,7 @@ def main():
 
     # To use a SQLite :memory: database, specify an empty URL:
     engine = create_engine('sqlite:///' + db_path)
-    CxrNormalProbability.metadata.create_all(engine)
+    MLPrediction.metadata.create_all(engine)
 
 if __name__ == "__main__":
     main()

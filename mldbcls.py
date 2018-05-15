@@ -9,7 +9,7 @@ class Base(object):
         return cls.__name__.lower()
     id = Column(Integer, primary_key=True)
 
-class CxrNormalProbability(Base):
+class MLPrediction(Base):
     #表名
     __tablename__ = 'ML_PREDICTIONS'
     #定义id,主键唯一,
