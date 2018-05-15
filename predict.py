@@ -13,10 +13,12 @@ import yaml
 from cxrmodel import CxrModel
 from dcmconv import get_LUT_value, get_PIL_mode, get_rescale_params
 from sqlalchemy import create_engine
+from sqlalchemy import and_
 from sqlalchemy.orm import sessionmaker
-from cxrdbcls import CxrNormalProbability
+from sqlalchemy.sql.expression import exists
+from mldbcls import MLPrediction
 
-engine = None
+session = None
 
 def read_dcm_to_image(ds_or_file):
     if isinstance(ds_or_file, FileDataset):
@@ -78,22 +80,14 @@ def do_predict(models, path):
     return result
 
 def check_if_pred_exists(acc_no, model_name, model_ver, weight_name, weight_ver):
-    global engine
-    query_str = 'select 1 ' \
-                'from "ML_PREDICTIONS" ' \
-                'where ACCNO = "{acc_no}" ' \
-                '  and MODEL_NAME = "{model_name}" ' \
-                '  and MODEL_VER = "{model_ver}" ' \
-                '  and WEIGHTS_NAME = "{weight_name}" ' \
-                '  and WEIGHTS_VER = "{weight_ver}";'.format(acc_no=acc_no,
-                                                             model_name=model_name,
-                                                             model_ver=model_ver,
-                                                             weight_name=weight_name,
-                                                             weight_ver=weight_ver)
-    result = engine.execute(query_str)
-    is_exist = result.fetchone()
-    result.close()
-    return True if is_exist else None
+    global session
+
+    (ret, ), = session.query(exists().where(and_(   MLPrediction.ACCNO == acc_no,
+                                                    MLPrediction.MODEL_NAME == model_name,
+                                                    MLPrediction.MODEL_VER == model_ver,
+                                                    MLPrediction.WEIGHTS_NAME == weight_name,
+                                                    MLPrediction.WEIGHTS_VER == weight_ver   )))
+    return ret
 
 def main():
     if len(sys.argv) is not 2:
@@ -106,9 +100,11 @@ def main():
         cfg = yaml.load(ymlfile)
 
     # init db engine
-    global engine
+    global session
     db_path = cfg['sqlite']['path']
     engine = create_engine('sqlite:///' + db_path)
+    Session = sessionmaker(bind=engine)
+    session = Session()
 
     # load all models
     cxr_models = [CxrModel(m, w) for m in cfg['model'] for w in m['weight']]
@@ -131,19 +127,17 @@ def main():
     # print results or write to db
     print(results)
     print(len(results))
-    """
-    db_path = cfg['sqlite']['path']
-    engine = create_engine('sqlite:///' + db_path)
-    Session = sessionmaker(bind=engine)
-    session = Session()
+
     for r in results:
-        session.add(CxrNormalProbability(acc_no=r['acc_no'],
-                                         model_name=r['model_name'],
-                                         model_ver=r['model_ver'],
-                                         normal_probability=r['normal_probability']))
+        session.add(MLPrediction(   ACCNO=r['acc_no'],
+                                    MODEL_NAME=r['model_name'],
+                                    MODEL_VER=r['model_ver'],
+                                    WEIGHTS_NAME=r['weight_name'],
+                                    WEIGHTS_VER=r['weight_ver'],
+                                    PROBABILITY=r['probability'] ))
         session.commit()
+
     session.close()
-    """
 
 if __name__ == "__main__":
     main()
