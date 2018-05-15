@@ -17,6 +17,7 @@ from sqlalchemy import and_
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql.expression import exists
 from mldbcls import MLPrediction
+import time
 
 session = None
 
@@ -94,6 +95,8 @@ def main():
         print("argv")
         sys.exit(1)
 
+    t_start = time.time()
+
     # load cfg
     yml_path = join('config', 'cxr.yml')
     with open(yml_path, 'r') as ymlfile:
@@ -109,6 +112,9 @@ def main():
     # load all models
     cxr_models = [CxrModel(m, w) for m in cfg['model'] for w in m['weight']]
 
+    t_models_loaded = time.time()
+    print("Time for loading models: ", t_models_loaded - t_start)
+
     path = sys.argv[1]
     results = []
     if (isfile(path)):
@@ -123,6 +129,9 @@ def main():
                 result = do_predict(cxr_models, fullpath)
                 if result:
                     results.append(result)
+
+    t_prediction_done = time.time()
+    print("Time for all predictions: ", t_prediction_done - t_models_loaded)
 
     # print results or write to db
     print(results)
