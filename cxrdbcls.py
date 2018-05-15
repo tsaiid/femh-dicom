@@ -11,12 +11,14 @@ class Base(object):
 
 class CxrNormalProbability(Base):
     #表名
-    __tablename__ = 'cxr_normal_probability'
+    __tablename__ = 'ML_PREDICTIONS'
     #定义id,主键唯一,
     id = Column(Integer, primary_key=True, autoincrement=True)
-    acc_no = Column(String(16),nullable=False)
-    model_name = Column(String(16),nullable=False)
-    model_ver = Column(String(16),nullable=False)
-    normal_probability = Column(Float(),nullable=False)
+    ACCNO = Column(String(50),nullable=False)
+    MODEL_NAME = Column(String(50),nullable=False)
+    MODEL_VER = Column(String(50),nullable=False)
+    WEIGHTS_NAME = Column(String(50),nullable=False)
+    WEIGHTS_VER = Column(String(50),nullable=False)
+    PROBABILITY = Column(Float(),nullable=False)
     time_created = Column(DateTime(timezone=True), server_default=func.now())
     time_updated = Column(DateTime(timezone=True), onupdate=func.now())
