@@ -12,6 +12,7 @@ from os.path import isfile, isdir, join, expanduser
 import yaml
 from cxrmodel import CxrModel
 from dcmconv import get_LUT_value, get_PIL_mode, get_rescale_params
+import cx_Oracle
 from sqlalchemy import create_engine
 from sqlalchemy import and_
 from sqlalchemy.orm import sessionmaker
@@ -58,7 +59,8 @@ def do_predict(models, path):
         model_ver = model.model_ver
         weight_name = model.weight_name
         weight_ver = model.weight_ver
-        is_exist = check_if_pred_exists(acc_no, model_name, model_ver, weight_name, weight_ver)
+        category = model.category
+        is_exist = check_if_pred_exists(acc_no, model_name, model_ver, weight_name, weight_ver, category)
         if is_exist:
             continue
 
@@ -77,18 +79,21 @@ def do_predict(models, path):
                     'model_ver': model_ver,
                     'weight_name': weight_name,
                     'weight_ver': weight_ver,
+                    'category': category,
                     'probability': prob[0][0]  }
     return result
 
-def check_if_pred_exists(acc_no, model_name, model_ver, weight_name, weight_ver):
+def check_if_pred_exists(acc_no, model_name, model_ver, weight_name, weight_ver, category):
     global session
 
-    (ret, ), = session.query(exists().where(and_(   MLPrediction.ACCNO == acc_no,
-                                                    MLPrediction.MODEL_NAME == model_name,
-                                                    MLPrediction.MODEL_VER == model_ver,
-                                                    MLPrediction.WEIGHTS_NAME == weight_name,
-                                                    MLPrediction.WEIGHTS_VER == weight_ver   )))
-    return ret
+    exists = session.query(MLPrediction).\
+                       filter_by(ACCNO = acc_no).\
+                       filter_by(MODEL_NAME = model_name).\
+                       filter_by(MODEL_VER = model_ver).\
+                       filter_by(WEIGHTS_NAME = weight_name).\
+                       filter_by(CATEGORY = category).\
+                       filter_by(WEIGHTS_VER = weight_ver).scalar()
+    return exists
 
 def main():
     if len(sys.argv) is not 2:
@@ -104,8 +109,16 @@ def main():
 
     # init db engine
     global session
-    db_path = cfg['sqlite']['path']
-    engine = create_engine('sqlite:///' + db_path)
+    #db_path = cfg['sqlite']['path']
+    oracle_conn_str = 'oracle+cx_oracle://{username}:{password}@{dsn_str}'
+    dsn_str = cx_Oracle.makedsn(cfg['oracle']['ip'], cfg['oracle']['port'], cfg['oracle']['service_name']).replace('SID', 'SERVICE_NAME')
+    engine = create_engine(
+        oracle_conn_str.format(
+            username=cfg['oracle']['username'],
+            password=cfg['oracle']['password'],
+            dsn_str=dsn_str
+        )
+    )
     Session = sessionmaker(bind=engine)
     session = Session()
 
@@ -143,6 +156,7 @@ def main():
                                     MODEL_VER=r['model_ver'],
                                     WEIGHTS_NAME=r['weight_name'],
                                     WEIGHTS_VER=r['weight_ver'],
+                                    CATEGORY=r['category'],
                                     PROBABILITY=r['probability'] ))
         session.commit()
 
