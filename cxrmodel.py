@@ -7,6 +7,7 @@ class CxrModel():
         self.model_ver = model_cfg['ver']
         self.weight_name = weight_cfg['name']
         self.weight_ver = weight_cfg['ver']
+        self.category = weight_cfg['category']
         self.obj.load_weights(weight_cfg['path'])
         self.height = weight_cfg['height']
         self.width = weight_cfg['width']
