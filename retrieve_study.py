@@ -6,20 +6,7 @@ import os
 import sys
 import errno
 
-def main():
-    if len(sys.argv) < 3:
-        sys.exit("no argv")
-
-    # load cfg
-    yml_path = os.path.join('config', 'pacs.yml')
-    with open(yml_path, 'r') as ymlfile:
-        cfg = yaml.load(ymlfile)
-
-
-    #acc_no = "RA04810941530099"
-    acc_no = sys.argv[1]
-    output_dir = sys.argv[2]
-
+def retrieve_study(cfg, acc_no, output_dir):
     if not os.path.exists(output_dir):
         try:
             os.makedirs(output_dir)
@@ -55,4 +42,17 @@ def main():
     assoc.release()
 
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) < 3:
+        sys.exit("no argv")
+
+    # load cfg
+    yml_path = os.path.join('config', 'pacs.yml')
+    with open(yml_path, 'r') as ymlfile:
+        cfg = yaml.load(ymlfile)
+
+
+    #acc_no = "RA04810941530099"
+    acc_no = sys.argv[1]
+    output_dir = sys.argv[2]
+
+    retrieve_study(cfg, acc_no, output_dir)
