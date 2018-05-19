@@ -1,0 +1,58 @@
+from pynetdicom3 import AE
+from pynetdicom3 import QueryRetrieveSOPClassList
+from pydicom.dataset import Dataset
+import yaml
+import os
+import sys
+import errno
+
+def main():
+    if len(sys.argv) < 3:
+        sys.exit("no argv")
+
+    # load cfg
+    yml_path = os.path.join('config', 'pacs.yml')
+    with open(yml_path, 'r') as ymlfile:
+        cfg = yaml.load(ymlfile)
+
+
+    #acc_no = "RA04810941530099"
+    acc_no = sys.argv[1]
+    output_dir = sys.argv[2]
+
+    if not os.path.exists(output_dir):
+        try:
+            os.makedirs(output_dir)
+        except OSError as exc: # Guard against race condition
+            if exc.errno != errno.EEXIST:
+                raise
+
+    ae = AE(scu_sop_class=QueryRetrieveSOPClassList, ae_title=cfg['my']['aet'])
+    assoc = ae.associate(cfg['pacs']['ip'], cfg['pacs']['port'])
+    ds = Dataset()
+    ds.AccessionNumber = acc_no
+    ds.QueryRetrieveLevel = "STUDY"
+    responses = assoc.send_c_find(ds, query_model='P')
+    for (status, dataset) in responses:
+        if status.Status in (0xFF00, 0xFF01):
+            p_id = dataset.PatientID
+            study_uid = dataset.StudyInstanceUID
+            cmd_str = r'''movescu {pacs_ip} {pacs_port} +P {port} +xa -aec {pacs_aet} -aet {aet} \
+                          -k QueryRetrieveLevel=STUDY \
+                          -k AccessionNumber={acc_no} \
+                          -k PatientID={p_id} \
+                          -k StudyInstanceUID={study_uid} \
+                          -od {output_dir} \
+                        '''.format( pacs_ip=cfg['pacs']['ip'], pacs_port=cfg['pacs']['port'], pacs_aet=cfg['pacs']['aet'],
+                                    aet=cfg['my']['aet'], port=cfg['my']['port'],
+                                    acc_no=acc_no, p_id=p_id, study_uid=study_uid,
+                                    output_dir=output_dir )
+            #print(cmd_str)
+            os.system(cmd_str)
+            #print("Success. acc_no={}".format(acc_no))
+        elif status.Status != 0x0:
+            print("acc_no={}, status={}".format(acc_no, hex(status.Status)))
+    assoc.release()
+
+if __name__ == "__main__":
+    main()
