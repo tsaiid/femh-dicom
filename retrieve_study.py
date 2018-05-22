@@ -14,8 +14,8 @@ def retrieve_study(cfg, acc_no, output_dir):
             if exc.errno != errno.EEXIST:
                 raise
 
-    ae = AE(scu_sop_class=QueryRetrieveSOPClassList, ae_title=cfg['my']['aet'])
-    assoc = ae.associate(cfg['pacs']['ip'], cfg['pacs']['port'])
+    ae = AE(scu_sop_class=QueryRetrieveSOPClassList, ae_title=cfg['pacs']['my']['aet'])
+    assoc = ae.associate(cfg['pacs']['called']['ip'], cfg['pacs']['called']['port'])
     ds = Dataset()
     ds.AccessionNumber = acc_no
     ds.QueryRetrieveLevel = "STUDY"
@@ -30,8 +30,8 @@ def retrieve_study(cfg, acc_no, output_dir):
                           -k PatientID={p_id} \
                           -k StudyInstanceUID={study_uid} \
                           -od {output_dir} \
-                        '''.format( pacs_ip=cfg['pacs']['ip'], pacs_port=cfg['pacs']['port'], pacs_aet=cfg['pacs']['aet'],
-                                    aet=cfg['my']['aet'], port=cfg['my']['port'],
+                        '''.format( pacs_ip=cfg['pacs']['called']['ip'], pacs_port=cfg['pacs']['called']['port'], pacs_aet=cfg['pacs']['called']['aet'],
+                                    aet=cfg['pacs']['my']['aet'], port=cfg['pacs']['my']['port'],
                                     acc_no=acc_no, p_id=p_id, study_uid=study_uid,
                                     output_dir=output_dir )
             #print(cmd_str)
