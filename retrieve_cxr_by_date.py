@@ -2,7 +2,9 @@ import yaml
 import os
 import sys
 from datetime import datetime
-#from retrieve_study import retrieve_study
+import cx_Oracle
+from sqlalchemy import create_engine
+from retrieve_study import retrieve_study
 
 def try_parsing_date(text):
     for fmt in ('%Y-%m-%d', '%Y/%m/%d', '%Y%m%d'):
@@ -18,7 +20,7 @@ def main():
         sys.exit("no argv")
 
     # load cfg
-    yml_path = os.path.join('config', 'pacs.yml')
+    yml_path = os.path.join('config', 'cxr.yml')
     with open(yml_path, 'r') as ymlfile:
         cfg = yaml.load(ymlfile)
 
@@ -27,6 +29,7 @@ def main():
     output_dir = sys.argv[2]
 
     # get worklist of cxr on the target date
+    oracle_conn_str = 'oracle+cx_oracle://{username}:{password}@{dsn_str}'
     dsn_str = cx_Oracle.makedsn(cfg['oracle2']['ip'],
                                 cfg['oracle2']['port'],
                                 cfg['oracle2']['service_name']).replace('SID', 'SERVICE_NAME')
@@ -48,9 +51,9 @@ FROM
             examcode IN ('RA014', 'RA015', 'RA016', 'RA017', 'RA018', 'RA021')
             AND
             examdate BETWEEN
-                TO_DATE( TO_CHAR( {target_date}, 'yyyy-mm-dd' ), 'yyyy-mm-dd' )
+                TO_DATE( '{target_date}', 'yyyy-mm-dd' )
                     AND
-                TO_DATE( TO_CHAR( {target_date}, 'yyyy-mm-dd' ) || ' 23:59:59', 'yyyy-mm-dd hh24:mi:ss' )
+                TO_DATE( '{target_date} 23:59:59', 'yyyy-mm-dd hh24:mi:ss' )
         ORDER BY examdate
     ) w
 WHERE
@@ -60,7 +63,7 @@ WHERE
     #cxr_list = [row['accno'] for row in results]
     for row in results:
         print(row['accno'])
-        retrieve_study(cfg, acc_no, output_dir)
+        retrieve_study(cfg, row['accno'], output_dir)
 
 if __name__ == "__main__":
     main()
