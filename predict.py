@@ -50,7 +50,7 @@ def predict_image(img, model):
     return preds
 
 def do_predict(models, path):
-    result = None
+    results = []
     ds, img = read_dcm_to_image(path)
     for model in models:
         # check if exists
@@ -62,6 +62,7 @@ def do_predict(models, path):
         category = model.category
         is_exist = check_if_pred_exists(acc_no, model_name, model_ver, weight_name, weight_ver, category)
         if is_exist:
+            print("{} {} {} exists, skip.".format(acc_no, model_name, weight_name))
             continue
 
         small_img = img.resize((model.height, model.width))
@@ -75,13 +76,14 @@ def do_predict(models, path):
         small_img_arr = np.array(small_img.convert('RGB'))
         prob = predict_image(small_img_arr, model.obj)
         result = { 'acc_no': acc_no,
-                    'model_name': model_name,
-                    'model_ver': model_ver,
-                    'weight_name': weight_name,
-                    'weight_ver': weight_ver,
-                    'category': category,
-                    'probability': prob[0][0]  }
-    return result
+                   'model_name': model_name,
+                   'model_ver': model_ver,
+                   'weight_name': weight_name,
+                   'weight_ver': weight_ver,
+                   'category': category,
+                   'probability': prob[0][0]  }
+        results.append(result)
+    return results
 
 def check_if_pred_exists(acc_no, model_name, model_ver, weight_name, weight_ver, category):
     global session
@@ -91,8 +93,8 @@ def check_if_pred_exists(acc_no, model_name, model_ver, weight_name, weight_ver,
                        filter_by(MODEL_NAME = model_name).\
                        filter_by(MODEL_VER = model_ver).\
                        filter_by(WEIGHTS_NAME = weight_name).\
-                       filter_by(CATEGORY = category).\
-                       filter_by(WEIGHTS_VER = weight_ver).scalar()
+                       filter_by(WEIGHTS_VER = weight_ver).\
+                       filter_by(CATEGORY = category).scalar()
     return exists
 
 def main():
@@ -124,6 +126,9 @@ def main():
 
     # load all models
     cxr_models = [CxrModel(m, w) for m in cfg['model'] for w in m['weight']]
+    print('{} models loaded.'.format(len(cxr_models)))
+    for i, m in enumerate(cxr_models):
+        print("{}. {} {} {} {}".format(i, m.model_name, m.model_ver, m.weight_name, m.weight_ver))
 
     t_models_loaded = time.time()
     print("Time for loading models: ", t_models_loaded - t_start)
@@ -131,24 +136,22 @@ def main():
     path = sys.argv[1]
     results = []
     if (isfile(path)):
-        result = do_predict(cxr_models, path)
-        if result:
-            results.append(result)
+        single_results = do_predict(cxr_models, path)
+        results.extend(single_results)
     elif (isdir(path)):
         files = listdir(path)
         for f in files:
             fullpath = join(path, f)
             if isfile(fullpath):
-                result = do_predict(cxr_models, fullpath)
-                if result:
-                    results.append(result)
+                single_results = do_predict(cxr_models, fullpath)
+                results.extend(single_results)
 
     t_prediction_done = time.time()
     print("Time for all predictions: ", t_prediction_done - t_models_loaded)
 
     # print results or write to db
-    print(results)
-    print(len(results))
+    #print(results)
+    print('{} done. {} results.'.format(path, len(results)))
 
     for r in results:
         session.add(MLPrediction(   ACCNO=r['acc_no'],
