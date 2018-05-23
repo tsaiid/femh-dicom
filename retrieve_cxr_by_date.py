@@ -70,13 +70,15 @@ FROM
         ORDER BY examdate
     ) w
 WHERE
-    ROWNUM < 2000
+    ROWNUM <= 20000
     '''.format(start_date=start_date, end_date=end_date)
     results = engine_wl.execute(sql_get_worklist)
-    #cxr_list = [row['accno'] for row in results]
-    for row in results:
-        print(row['accno'])
-        retrieve_study(cfg, row['accno'], output_dir)
+    cxr_list = [row['accno'] for row in results]
+    cxr_total = len(cxr_list)
+    print('Start retrieving CXR... Total: {cxr_total}'.format(cxr_total=cxr_total))
+    for i, accno in enumerate(cxr_list):
+        print('{}/{}\t{}'.format(i, cxr_total, accno))
+        retrieve_study(cfg, accno, output_dir)
 
 if __name__ == "__main__":
     main()
