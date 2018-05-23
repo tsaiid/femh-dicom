@@ -56,9 +56,10 @@ def main():
     #Session = sessionmaker(bind=engine)
     #session = Session()
     sql_get_worklist = '''
-SELECT  w.accno
+SELECT  w.accno,
+        TO_CHAR(w.examdate, 'yyyy-mm-dd hh24:mi:ss')
 FROM
-    (   SELECT accno
+    (   SELECT accno, examdate
         FROM risworklistdatas
         WHERE
             examcode IN ('RA014', 'RA015', 'RA016', 'RA017', 'RA018', 'RA021')
@@ -73,12 +74,12 @@ WHERE
     ROWNUM <= 20000
     '''.format(start_date=start_date, end_date=end_date)
     results = engine_wl.execute(sql_get_worklist)
-    cxr_list = [row['accno'] for row in results]
+    cxr_list = [{'accno': row['accno'], 'examdate': row['examdate']} for row in results]
     cxr_total = len(cxr_list)
     print('Start retrieving CXR... Total: {cxr_total}'.format(cxr_total=cxr_total))
-    for i, accno in enumerate(cxr_list):
-        print('{}/{}\t{}'.format(i, cxr_total, accno))
-        retrieve_study(cfg, accno, output_dir)
+    for i, cxr in enumerate(cxr_list):
+        print('{}/{}\t{}\t{}'.format(i, cxr_total, cxr['accno'], cxr['examdate']))
+        retrieve_study(cfg, cxr['accno'], output_dir)
 
 if __name__ == "__main__":
     main()
