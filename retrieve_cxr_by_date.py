@@ -6,12 +6,25 @@ import cx_Oracle
 from sqlalchemy import create_engine
 from retrieve_study import retrieve_study
 
-def try_parsing_date(text):
+def try_parsing_date_range(text):
+    # only one date
     for fmt in ('%Y-%m-%d', '%Y/%m/%d', '%Y%m%d'):
         try:
-            return datetime.strptime(text, fmt)
+            start_date = datetime.strptime(text, fmt).strftime('%Y-%m-%d')
+            return (start_date, start_date)
         except ValueError:
             pass
+    # date range fmt: yyyymmdd-yyyymmdd
+    try:
+        text_a, text_b = text.split('-')
+        fmt = '%Y%m%d'
+        start_date = datetime.strptime(text_a, fmt)
+        end_date = datetime.strptime(text_b, fmt)
+        if end_date < start_date:
+            end_date = start_date
+        return (start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d'))
+    except ValueError:
+        pass
     raise ValueError('no valid date format found')
 
 def main():
@@ -25,7 +38,7 @@ def main():
         cfg = yaml.load(ymlfile)
 
     # parse date str
-    target_date = try_parsing_date(sys.argv[1]).strftime('%Y-%m-%d')
+    start_date, end_date = try_parsing_date_range(sys.argv[1])
     output_dir = sys.argv[2]
 
     # get worklist of cxr on the target date
