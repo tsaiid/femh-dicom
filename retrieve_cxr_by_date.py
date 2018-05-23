@@ -57,7 +57,7 @@ def main():
     #session = Session()
     sql_get_worklist = '''
 SELECT  w.accno,
-        TO_CHAR(w.examdate, 'yyyy-mm-dd hh24:mi:ss')
+        TO_CHAR(w.examdate, 'yyyy-mm-dd hh24:mi:ss') examdate
 FROM
     (   SELECT accno, examdate
         FROM risworklistdatas
