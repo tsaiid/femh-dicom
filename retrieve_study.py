@@ -18,21 +18,28 @@ def retrieve_study(cfg, acc_no, output_dir):
     assoc = ae.associate(cfg['pacs']['called']['ip'], cfg['pacs']['called']['port'])
     ds = Dataset()
     ds.AccessionNumber = acc_no
-    ds.QueryRetrieveLevel = "STUDY"
+    ds.QueryRetrieveLevel = "SERIES"
+    ds.Modality = ""
     responses = assoc.send_c_find(ds, query_model='P')
     for (status, dataset) in responses:
         if status.Status in (0xFF00, 0xFF01):
+            modality = dataset.Modality
+            if modality not in ('CR', 'DX'):
+                continue
+
             p_id = dataset.PatientID
             study_uid = dataset.StudyInstanceUID
+            series_uid = dataset.SeriesInstanceUID
+
             cmd_str = r'''movescu {pacs_ip} {pacs_port} +P {port} +xa -aec {pacs_aet} -aet {aet} \
-                          -k QueryRetrieveLevel=STUDY \
-                          -k AccessionNumber={acc_no} \
+                          -k QueryRetrieveLevel=SERIES \
                           -k PatientID={p_id} \
                           -k StudyInstanceUID={study_uid} \
+                          -k SeriesInstanceUID={series_uid} \
                           -od {output_dir} \
                         '''.format( pacs_ip=cfg['pacs']['called']['ip'], pacs_port=cfg['pacs']['called']['port'], pacs_aet=cfg['pacs']['called']['aet'],
                                     aet=cfg['pacs']['my']['aet'], port=cfg['pacs']['my']['port'],
-                                    acc_no=acc_no, p_id=p_id, study_uid=study_uid,
+                                    p_id=p_id, study_uid=study_uid, series_uid=series_uid,
                                     output_dir=output_dir )
             #print(cmd_str)
             os.system(cmd_str)
