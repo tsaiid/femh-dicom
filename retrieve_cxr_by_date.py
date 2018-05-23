@@ -64,14 +64,14 @@ FROM
             examcode IN ('RA014', 'RA015', 'RA016', 'RA017', 'RA018', 'RA021')
             AND
             examdate BETWEEN
-                TO_DATE( '{target_date}', 'yyyy-mm-dd' )
+                TO_DATE( '{start_date}', 'yyyy-mm-dd' )
                     AND
-                TO_DATE( '{target_date} 23:59:59', 'yyyy-mm-dd hh24:mi:ss' )
+                TO_DATE( '{end_date} 23:59:59', 'yyyy-mm-dd hh24:mi:ss' )
         ORDER BY examdate
     ) w
 WHERE
     ROWNUM < 2000
-    '''.format(target_date=target_date)
+    '''.format(start_date=start_date, end_date=end_date)
     results = engine_wl.execute(sql_get_worklist)
     #cxr_list = [row['accno'] for row in results]
     for row in results:
