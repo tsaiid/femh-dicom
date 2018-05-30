@@ -1,6 +1,12 @@
 import numpy as np
 from pydicom.multival import MultiValue
 
+# This function returns the data array values mapped to 0-256 using window/level parameters
+#	If provided it takes into account the DICOM flags:
+#	- Rescale Intercept http://dicomlookup.com/lookup.asp?sw=Tnumber&q=(0028,1052)
+#	- Rescale Slope http://dicomlookup.com/lookup.asp?sw=Tnumber&q=(0028,1053)
+#	Code adapted from pydicom, requires numpy
+#	http://code.google.com/p/pydicom/source/browse/source/dicom/contrib/pydicom_PIL.py
 def get_LUT_value(data, window, level, rescaleIntercept=0, rescaleSlope=1):
     if isinstance(window, list) or isinstance(window, MultiValue):
         window = window[0]
