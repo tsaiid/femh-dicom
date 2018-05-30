@@ -30,7 +30,7 @@ def read_dcm_to_image(ds_or_file):
 
     return img
 
-def do_convert(filename, img_out_path):
+def do_convert(filename, img_out_path, img_out_width=1024, img_out_square=True):
     ds = pydicom.dcmread(filename)
     img_an = ds.AccessionNumber
 
@@ -53,7 +53,15 @@ def do_convert(filename, img_out_path):
 
     img = read_dcm_to_image(ds)
 
-    small_img = img.resize((1024, 1024))
+    # calculate resize image width/height
+    img_width, img_height = img.size
+    img_out_width = int(img_out_width)
+    if img_out_square:
+        img_out_height = img_out_width
+    else:
+        img_out_height = int( img_out_width / float(img_width) * float(img_height) )
+
+    small_img = img.resize((img_out_width, img_out_height))
     small_img = small_img.convert('L')
 
     # MONOCHROME
@@ -64,21 +72,23 @@ def do_convert(filename, img_out_path):
 
 
 def main():
-    if len(sys.argv) is not 3:
-        print("argv")
+    if len(sys.argv) is not 5:
+        print("argv: img_path img_out_path img_out_width img_out_square")
         sys.exit(1)
 
     img_path = sys.argv[1]
     img_out_path = sys.argv[2]
+    img_out_width = int(sys.argv[3])
+    img_out_square = sys.argv[4] != '0'
     t_start = time.time()
 
     if isfile(img_path):
-        do_convert(img_path, img_out_path)
+        do_convert(img_path, img_out_path, img_out_width, img_out_square)
     elif isdir(img_path):
         with ProcessPoolExecutor() as executor:
             files = [join(img_path, f) for f in listdir(img_path) if isfile(join(img_path, f))]
 
-            futures = [executor.submit(do_convert, f, img_out_path) for f in files]
+            futures = [executor.submit(do_convert, f, img_out_path, img_out_width, img_out_square) for f in files]
 
             for future in as_completed(futures):
                 try:
