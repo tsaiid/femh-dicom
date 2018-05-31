@@ -10,8 +10,10 @@ import sys
 from os import listdir
 from os.path import isfile, isdir, join, expanduser
 import yaml
+import json
 from cxrmodel import CxrModel
 from dcmconv import get_LUT_value, get_PIL_mode, get_rescale_params
+import hashlib
 import cx_Oracle
 from sqlalchemy import create_engine
 from sqlalchemy import and_
@@ -153,8 +155,21 @@ def main():
     #print(results)
     print('{} done. {} results.'.format(path, len(results)))
 
+    class MyEncoder(json.JSONEncoder):
+        def default(self, obj):
+            if isinstance(obj, np.integer):
+                return int(obj)
+            elif isinstance(obj, np.floating):
+                return float(obj)
+            elif isinstance(obj, np.ndarray):
+                return obj.tolist()
+            else:
+                return super(MyEncoder, self).default(obj)
+
     for r in results:
-        session.add(MLPrediction(   ACCNO=r['acc_no'],
+        hash_pred_id = hashlib.sha256(json.dumps(r, sort_keys=True, cls=MyEncoder).encode('utf-8')).hexdigest()
+        session.add(MLPrediction(   RED_ID=hash_pred_id,
+                                    ACCNO=r['acc_no'],
                                     MODEL_NAME=r['model_name'],
                                     MODEL_VER=r['model_ver'],
                                     WEIGHTS_NAME=r['weight_name'],
@@ -162,6 +177,7 @@ def main():
                                     CATEGORY=r['category'],
                                     PROBABILITY=r['probability'] ))
         session.commit()
+        #print(r['acc_no'], r['probability'], hash_pred_id)
 
     session.close()
 
