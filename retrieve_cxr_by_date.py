@@ -43,13 +43,13 @@ def main():
 
     # get worklist of cxr on the target date
     oracle_conn_str = 'oracle+cx_oracle://{username}:{password}@{dsn_str}'
-    dsn_str = cx_Oracle.makedsn(cfg['oracle2']['ip'],
-                                cfg['oracle2']['port'],
-                                cfg['oracle2']['service_name']).replace('SID', 'SERVICE_NAME')
+    dsn_str = cx_Oracle.makedsn(cfg['oracle']['ip'],
+                                cfg['oracle']['port'],
+                                cfg['oracle']['service_name']).replace('SID', 'SERVICE_NAME')
     engine_wl = create_engine(
         oracle_conn_str.format(
-            username=cfg['oracle2']['username'],
-            password=cfg['oracle2']['password'],
+            username=cfg['oracle']['username'],
+            password=cfg['oracle']['password'],
             dsn_str=dsn_str
         )
     )
