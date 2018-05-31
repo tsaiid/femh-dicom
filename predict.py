@@ -67,7 +67,7 @@ def do_predict(models, path):
             print("{} {} {} exists, skip.".format(acc_no, model_name, weight_name))
             continue
 
-        small_img = img.resize((model.height, model.width))
+        small_img = img.resize((model.width, model.height))
         small_img = small_img.convert('L')
 
         # MONOCHROME
