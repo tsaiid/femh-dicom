@@ -3,7 +3,7 @@ import pandas as pd
 
 def main():
     if len(sys.argv) is not 4:
-        print("argv")
+        print("argv: all_csv_path target_csv_path output_csv_path")
         sys.exit(1)
 
     all_csv_path = sys.argv[1]
