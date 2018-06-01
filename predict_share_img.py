@@ -62,7 +62,7 @@ def do_predict(models, path):
     for model in models:
         target_size = (model.width, model.height)
         if target_size not in small_imgs_arr:
-            small_img = img.resize(target_size)
+            small_img = img.resize(target_size).convert('L')
             if ds.PhotometricInterpretation == 'MONOCHROME1':
                 small_img = invert(small_img)
             small_imgs_arr[target_size] = np.array(small_img.convert('RGB'))
