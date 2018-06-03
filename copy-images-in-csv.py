@@ -29,7 +29,7 @@ def main():
                 had_checked_dir_exists = True
 
         shutil.copy2(src, output_img_path)
-        #print(src, output_img_path)
+        print(index, src, output_img_path)
         #if index > 3:
         #    break
 
