@@ -12,6 +12,8 @@ deid = "*"
 sqlalchemy = "*"
 keras = "*"
 tensorflow = "*"
+cx-oracle = "*"
+pandas = "*"
 
 [dev-packages]
 
