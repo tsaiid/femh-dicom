@@ -4,7 +4,7 @@ import csv
 
 def main():
     if len(sys.argv) is not 3:
-        print("argv")
+        print("argv: start_dir output_csv_path")
         sys.exit(1)
 
     start_dir = sys.argv[1]
