@@ -47,9 +47,12 @@ def main():
     df_dev = df_pos_dev.append(df_neg_dev, ignore_index=True)
     df_train = df_pos_train.append(df_neg_train, ignore_index=True)
 
-    test_path = 'test-{}.csv'.format(category)
-    dev_path = 'dev-{}.csv'.format(category)
-    train_path = 'train-{}.csv'.format(category)
+    #test_path = 'test-{}.csv'.format(category)
+    #dev_path = 'dev-{}.csv'.format(category)
+    #train_path = 'train-{}.csv'.format(category)
+    test_path = 'test.csv'
+    dev_path = 'dev.csv'
+    train_path = 'train.csv'
 
     df_test.to_csv(test_path, index=False)
     df_dev.to_csv(dev_path, index=False)
