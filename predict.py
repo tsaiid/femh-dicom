@@ -11,7 +11,7 @@ from os import listdir
 from os.path import isfile, isdir, join, expanduser
 import yaml
 import json
-from cxrmodel import CxrKerasModel
+from cxrkerasmodel import CxrKerasModel
 from dcmconv import get_LUT_value, get_PIL_mode, get_rescale_params
 import hashlib
 import cx_Oracle
