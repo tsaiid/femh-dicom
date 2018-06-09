@@ -11,7 +11,7 @@ from os import listdir
 from os.path import isfile, isdir, join, expanduser
 import yaml
 import json
-from cxrmodel import CxrModel
+from cxrmodel import CxrKerasModel
 from dcmconv import get_LUT_value, get_PIL_mode, get_rescale_params
 import hashlib
 import cx_Oracle
@@ -136,7 +136,7 @@ def main():
         session = Session()
 
     # load all models
-    cxr_models = [CxrModel(m, w) for m in cfg['model'] for w in m['weight']]
+    cxr_models = [CxrKerasModel(m, w) for m in cfg['model'] for w in m['weight']]
     print('{} models loaded.'.format(len(cxr_models)))
     for i, m in enumerate(cxr_models):
         print("{}. {} {} {} {}".format(i, m.model_name, m.model_ver, m.weight_name, m.weight_ver))
