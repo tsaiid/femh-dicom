@@ -1,11 +1,20 @@
 import numpy as np
 import caffe
 import cv2
+from PIL import Image
+from PIL.ImageOps import invert
 import pydicom
+from pydicom.dataset import FileDataset
 import time
 import yaml
+import json
 import cx_Oracle
+from os import listdir
+from os.path import isfile, isdir, join, expanduser
+import sys
 import hashlib
+from cxrcaffemodel import CxrCaffeModel
+from dcmconv import get_LUT_value, get_PIL_mode, get_rescale_params
 
 
 session = None
@@ -43,13 +52,6 @@ def check_if_pred_exists(acc_no, model_name, model_ver, weight_name, weight_ver,
 
 def do_forward(path):
     global _caffe_models
-    """
-    img = cv2.imread('RA02130904360389.png')
-    if img.shape != (3, 1024, 1024):
-        img = img.reshape(3, 1024, 1024)
-    #img2 = img.reshape(-1, 3, 1024, 1024)
-    res = net.forward(data = np.asarray([img]))
-    """
     results = []
     ds, img = read_dcm_to_image(path)
     acc_no = ds.get('AccessionNumber', None)
@@ -62,7 +64,7 @@ def do_forward(path):
             small_img = img.resize(target_size).convert('L')
             if ds.PhotometricInterpretation == 'MONOCHROME1':
                 small_img = invert(small_img)
-            small_imgs_arr[target_size] = np.array(small_img.convert('RGB'))
+            small_imgs_arr[target_size] = np.array(small_img.convert('RGB')).reshape(-1, 3, model.width, model.height)
 
     for model in _caffe_models:
         # check if exists
@@ -79,14 +81,14 @@ def do_forward(path):
                 print("{} {} {} exists, skip.".format(acc_no, model_name, weight_name))
                 continue
 
-        res = model.net.forward(small_imgs_arr[(model.width, model.height)])
+        res = model.net.forward(data = np.asarray([small_imgs_arr[(model.width, model.height)]]))
         result = { 'acc_no': acc_no,
                    'model_name': model_name,
                    'model_ver': model_ver,
                    'weight_name': weight_name,
                    'weight_ver': weight_ver,
                    'category': category,
-                   'probability': prob[0][0]  }
+                   'probability': res['loss3/prob'][0][1]  }
         results.append(result)
     return results
 
@@ -126,7 +128,7 @@ def main():
     caffe.set_mode_cpu()
     _caffe_models = [CxrCaffeModel(m) for m in cfg['caffemodel']]
     print('{} models loaded.'.format(len(_caffe_models)))
-    for i, m in enumerate(cxr_models):
+    for i, m in enumerate(_caffe_models):
         print("{}. {} {} {} {}".format(i, m.model_name, m.model_ver, m.weight_name, m.weight_ver))
 
     t_models_loaded = time.time()
@@ -149,6 +151,32 @@ def main():
     print("Time for all predictions: ", t_prediction_done - t_models_loaded)
 
     print('{} done. {} results.'.format(path, len(results)))
+
+    class MyEncoder(json.JSONEncoder):
+        def default(self, obj):
+            if isinstance(obj, np.integer):
+                return int(obj)
+            elif isinstance(obj, np.floating):
+                return float(obj)
+            elif isinstance(obj, np.ndarray):
+                return obj.tolist()
+            else:
+                return super(MyEncoder, self).default(obj)
+
+    for r in results:
+        if _use_db:
+            hash_pred_id = hashlib.sha256(json.dumps(r, sort_keys=True, cls=MyEncoder).encode('utf-8')).hexdigest()
+            session.add(MLPrediction(   RED_ID=hash_pred_id,
+                                        ACCNO=r['acc_no'],
+                                        MODEL_NAME=r['model_name'],
+                                        MODEL_VER=r['model_ver'],
+                                        WEIGHTS_NAME=r['weight_name'],
+                                        WEIGHTS_VER=r['weight_ver'],
+                                        CATEGORY=r['category'],
+                                        PROBABILITY=r['probability'] ))
+            session.commit()
+        else:
+            print(r)
 
     if _use_db:
         session.close()
