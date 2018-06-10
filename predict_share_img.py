@@ -110,7 +110,7 @@ def do_predict(path):
                    'weight_name': weight_name,
                    'weight_ver': weight_ver,
                    'category': category,
-                   'probability': prob[0][0]  }
+                   'probability': preds[0][0]  }
         results.append(result)
     return results
 
