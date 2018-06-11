@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from config import DevConfig
 from sqlalchemy import text
@@ -72,6 +72,69 @@ def get_probability(accno):
             'success': 0,
             'reason': 'No result for accno: {accno}'.format(accno=accno)
         }
+    return jsonify(result_dict)
+
+@app.route('/selector', methods=['POST'])
+def selector():
+    result_dict = {'success': 0, 'reason': 'nil'}
+    if request.is_json:
+        query = request.get_json()
+        start_date = query.get('start_date')
+        end_date = query.get('end_date')
+        if not start_date or not end_date:
+            result_dict['reason'] = 'date range error'
+        else:
+            sql = '''
+            SELECT * FROM RISML_PREDICTIONS
+            WHERE examdate BETWEEN {start_date} AND {end_date}
+            '''.format(start_date=start_date, end_date=end_date)
+
+            normal = query.get('normal')
+            if normal:
+                normal_up = normal.get('up')
+                normal_down = normal.get('down')
+                if (normal_up and normal_down):
+                    sql += '''
+                AND (category = 'cxr-normal' AND weights_name = 'femh-224-32'
+                    AND probability <= {up} AND probability >= {down})
+                           '''.format(up=normal_up, down=normal_down)
+
+            ett = query.get('ett')
+            if ett:
+                ett_up = ett.get('up')
+                ett_down = ett.get('down')
+                if (ett_up and ett_down):
+                    sql += '''
+                AND (category = 'cxr-ett' AND weights_name = 'femh-224-32'
+                    AND probability <= {up} AND probability >= {down})
+                           '''.format(up=ett_up, down=ett_down)
+
+            port = query.get('port')
+            if ett:
+                port_up = port.get('up')
+                port_down = port.get('down')
+                if (port_up and port_down):
+                    sql += '''
+                AND (category = 'cxr-port' AND weights_name = 'femh-224-32'
+                    AND probability <= {up} AND probability >= {down})
+                           '''.format(up=port_up, down=port_down)
+
+            cardiomegaly = query.get('cardiomegaly')
+            if ett:
+                cardiomegaly_up = cardiomegaly.get('up')
+                cardiomegaly_down = cardiomegaly.get('down')
+                if (cardiomegaly_up and cardiomegaly_down):
+                    sql += '''
+                AND (category = 'cxr-cardiomegaly' AND weights_name = 'femh-224-32'
+                    AND probability <= {up} AND probability >= {down})
+                           '''.format(up=cardiomegaly_up, down=cardiomegaly_down)
+
+            sql += '''
+                AND ROWNUM <= 100
+                   '''
+
+            result_dict['response'] = sql
+
     return jsonify(result_dict)
 
 # 判斷自己執行非被當做引入的模組，因為 __name__ 這變數若被當做模組引入使用就不會是 __main__
