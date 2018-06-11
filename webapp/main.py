@@ -76,4 +76,4 @@ def get_probability(accno):
 
 # 判斷自己執行非被當做引入的模組，因為 __name__ 這變數若被當做模組引入使用就不會是 __main__
 if __name__ == '__main__':
-    app.run()
+    app.run(host='0.0.0.0')
