@@ -16,9 +16,8 @@ from dcmconv import get_LUT_value, get_PIL_mode, get_rescale_params
 import hashlib
 import cx_Oracle
 from sqlalchemy import create_engine
-from sqlalchemy import and_
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.sql.expression import exists
+from sqlalchemy.orm.exc import MultipleResultsFound
 from mldbcls import MLPrediction
 import time
 
@@ -117,13 +116,18 @@ def do_predict(path):
 def check_if_pred_exists(acc_no, model_name, model_ver, weight_name, weight_ver, category):
     global session
 
-    exists = session.query(MLPrediction).\
-                       filter_by(ACCNO = acc_no).\
-                       filter_by(MODEL_NAME = model_name).\
-                       filter_by(MODEL_VER = model_ver).\
-                       filter_by(WEIGHTS_NAME = weight_name).\
-                       filter_by(WEIGHTS_VER = weight_ver).\
-                       filter_by(CATEGORY = category).scalar()
+    try:
+        exists = session.query(MLPrediction).\
+                            filter_by(ACCNO = acc_no).\
+                            filter_by(MODEL_NAME = model_name).\
+                            filter_by(MODEL_VER = model_ver).\
+                            filter_by(WEIGHTS_NAME = weight_name).\
+                            filter_by(WEIGHTS_VER = weight_ver).\
+                            filter_by(CATEGORY = category).scalar()
+    except MultipleResultsFound:
+        print("MultipleResultsFound: ACCNO = {}, CATEGORY = {}. Please check DB.".format(acc_no, category))
+        exists = True
+
     return exists
 
 def main():
@@ -209,7 +213,10 @@ def main():
                                         WEIGHTS_VER=r['weight_ver'],
                                         CATEGORY=r['category'],
                                         PROBABILITY=r['probability'] ))
-            session.commit()
+            try:
+                session.commit()
+            except sqlalchemy.exc.IntegrityError:
+                print('sqlalchemy.exc.IntegrityError: {}'.format(r))
         else:
             print(r)
 

@@ -9,6 +9,10 @@ import time
 import yaml
 import json
 import cx_Oracle
+from mldbcls import MLPrediction
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm.exc import MultipleResultsFound
 from os import listdir
 from os.path import isfile, isdir, join, expanduser
 import sys
@@ -41,13 +45,18 @@ def read_dcm_to_image(ds_or_file):
 def check_if_pred_exists(acc_no, model_name, model_ver, weight_name, weight_ver, category):
     global session
 
-    exists = session.query(MLPrediction).\
-                       filter_by(ACCNO = acc_no).\
-                       filter_by(MODEL_NAME = model_name).\
-                       filter_by(MODEL_VER = model_ver).\
-                       filter_by(WEIGHTS_NAME = weight_name).\
-                       filter_by(WEIGHTS_VER = weight_ver).\
-                       filter_by(CATEGORY = category).scalar()
+    try:
+        exists = session.query(MLPrediction).\
+                            filter_by(ACCNO = acc_no).\
+                            filter_by(MODEL_NAME = model_name).\
+                            filter_by(MODEL_VER = model_ver).\
+                            filter_by(WEIGHTS_NAME = weight_name).\
+                            filter_by(WEIGHTS_VER = weight_ver).\
+                            filter_by(CATEGORY = category).scalar()
+    except MultipleResultsFound:
+        print("MultipleResultsFound: ACCNO = {}, CATEGORY = {}. Please check DB.".format(acc_no, category))
+        exists = True
+
     return exists
 
 def do_forward(path):
