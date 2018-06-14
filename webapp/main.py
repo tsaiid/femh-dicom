@@ -85,53 +85,78 @@ def selector():
             result_dict['reason'] = 'date range error'
         else:
             sql = '''
-            SELECT * FROM RISML_PREDICTIONS
-            WHERE examdate BETWEEN {start_date} AND {end_date}
-            '''.format(start_date=start_date, end_date=end_date)
+SELECT *
+FROM (
+    SELECT  w.accno,
+            w.datastatus,
+            TO_CHAR(w.examdate, 'yyyy-mm-dd hh24:mi:ss') examdate_str,
+            w.examcode,
+            w.examname,
+            w.operatedrid,
+            category, probability
+    FROM risworklistdatas w
+    LEFT JOIN
+        (   SELECT *
+            FROM (
+                SELECT accno, weights_name, category, probability
+                FROM risml_predictions
+                WHERE
+                    weights_name IN ('femh-224-32',
+                                     'femh-224-32-ett',
+                                     'femh-224-32-port-a',
+                                     'femh-224-32-cardiomegaly')
+            )
+        ) p
+    ON w.accno = p.accno
+    WHERE
+        examcode IN ('RA014', 'RA015', 'RA016', 'RA017', 'RA018', 'RA021')
+            AND
+        examdate BETWEEN
+            TO_DATE( '{start_date}', 'yyyy-mm-dd' )
+                AND
+            TO_DATE( '{end_date} 23:59:59', 'yyyy-mm-dd hh24:mi:ss' )
+)
+PIVOT (
+    MAX(probability)
+    FOR category IN ('cxr-normal' normal,
+                     'cxr-ett' ett,
+                     'cxr-port-a' port,
+                     'cxr-cardiomegaly' cardiomegaly)
+)
+ORDER BY normal DESC
+'''.format(start_date=start_date, end_date=end_date)
 
+            cond_list = []
             normal = query.get('normal')
             if normal:
                 normal_up = normal.get('up')
                 normal_down = normal.get('down')
                 if (normal_up and normal_down):
-                    sql += '''
-                AND (category = 'cxr-normal' AND weights_name = 'femh-224-32'
-                    AND probability <= {up} AND probability >= {down})
-                           '''.format(up=normal_up, down=normal_down)
+                    cond_list.append('(normal <= {up} AND normal >= {down})'.format(up=normal_up, down=normal_down))
 
             ett = query.get('ett')
             if ett:
                 ett_up = ett.get('up')
                 ett_down = ett.get('down')
                 if (ett_up and ett_down):
-                    sql += '''
-                AND (category = 'cxr-ett' AND weights_name = 'femh-224-32'
-                    AND probability <= {up} AND probability >= {down})
-                           '''.format(up=ett_up, down=ett_down)
+                    cond_list.append('(normal <= {up} AND normal >= {down})'.format(up=ett_up, down=ett_down))
 
             port = query.get('port')
-            if ett:
+            if port:
                 port_up = port.get('up')
                 port_down = port.get('down')
                 if (port_up and port_down):
-                    sql += '''
-                AND (category = 'cxr-port' AND weights_name = 'femh-224-32'
-                    AND probability <= {up} AND probability >= {down})
-                           '''.format(up=port_up, down=port_down)
+                    cond_list.append('(normal <= {up} AND normal >= {down})'.format(up=port_up, down=port_down))
 
             cardiomegaly = query.get('cardiomegaly')
-            if ett:
+            if cardiomegaly:
                 cardiomegaly_up = cardiomegaly.get('up')
                 cardiomegaly_down = cardiomegaly.get('down')
                 if (cardiomegaly_up and cardiomegaly_down):
-                    sql += '''
-                AND (category = 'cxr-cardiomegaly' AND weights_name = 'femh-224-32'
-                    AND probability <= {up} AND probability >= {down})
-                           '''.format(up=cardiomegaly_up, down=cardiomegaly_down)
+                    cond_list.append('(normal <= {up} AND normal >= {down})'.format(up=cardiomegaly_up, down=cardiomegaly_down))
 
-            sql += '''
-                AND ROWNUM <= 100
-                   '''
+            cond_list.append('(ROWNUM <= 100)')
+            cond_sql_str = ' AND '.join(cond_list)
 
             result_dict['response'] = sql
 
