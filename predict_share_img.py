@@ -24,6 +24,7 @@ import time
 
 session = None
 _use_db = None
+_keras_models = None
 
 def read_dcm_to_image(ds_or_file):
     if isinstance(ds_or_file, FileDataset):
@@ -52,14 +53,15 @@ def predict_image(img, model):
     preds = model.predict(x)
     return preds
 
-def do_predict(models, path):
+def do_predict(path):
+    global _keras_models
     results = []
     ds, img = read_dcm_to_image(path)
     acc_no = ds.get('AccessionNumber', None)
 
     # prepare all resize
     small_imgs_arr = {}
-    for model in models:
+    for model in _keras_models:
         target_size = (model.width, model.height)
         if target_size not in small_imgs_arr:
             small_img = img.resize(target_size).convert('L')
@@ -67,7 +69,7 @@ def do_predict(models, path):
                 small_img = invert(small_img)
             small_imgs_arr[target_size] = np.array(small_img.convert('RGB'))
 
-    for model in models:
+    for model in _keras_models:
         # check if exists
         model_name = model.model_name
         model_ver = model.model_ver
@@ -93,14 +95,22 @@ def do_predict(models, path):
 
         #exam_time = ds.get('AcquisitionDate', None)
         #small_img_arr = np.array(small_img.convert('RGB'))
-        prob = predict_image(small_imgs_arr[(model.width, model.height)], model.obj)
+        #prob = predict_image(small_imgs_arr[(model.width, model.height)], model.obj)
+        """
+        from keras demo
+        """
+        x = img_to_array(small_imgs_arr[(model.width, model.height)])
+        x = np.expand_dims(x, axis=0)
+        x = preprocess_input(x)
+        preds = model.obj.predict(x)
+
         result = { 'acc_no': acc_no,
                    'model_name': model_name,
                    'model_ver': model_ver,
                    'weight_name': weight_name,
                    'weight_ver': weight_ver,
                    'category': category,
-                   'probability': prob[0][0]  }
+                   'probability': preds[0][0]  }
         results.append(result)
     return results
 
@@ -131,7 +141,6 @@ def main():
     with open(yml_path, 'r') as ymlfile:
         cfg = yaml.load(ymlfile)
 
-
     if _use_db:
         # init db engine
         global session
@@ -149,9 +158,10 @@ def main():
         session = Session()
 
     # load all models
-    cxr_models = [CxrKerasModel(m, w) for m in cfg['model'] for w in m['weight']]
-    print('{} models loaded.'.format(len(cxr_models)))
-    for i, m in enumerate(cxr_models):
+    global _keras_models
+    _keras_models = [CxrKerasModel(m, w) for m in cfg['model'] for w in m['weight']]
+    print('{} models loaded.'.format(len(_keras_models)))
+    for i, m in enumerate(_keras_models):
         print("{}. {} {} {} {}".format(i, m.model_name, m.model_ver, m.weight_name, m.weight_ver))
 
     t_models_loaded = time.time()
@@ -160,14 +170,14 @@ def main():
     path = sys.argv[1]
     results = []
     if (isfile(path)):
-        single_results = do_predict(cxr_models, path)
+        single_results = do_predict(path)
         results.extend(single_results)
     elif (isdir(path)):
         files = listdir(path)
         for f in files:
             fullpath = join(path, f)
             if isfile(fullpath):
-                single_results = do_predict(cxr_models, fullpath)
+                single_results = do_predict(fullpath)
                 results.extend(single_results)
 
     t_prediction_done = time.time()
