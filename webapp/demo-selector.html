@@ -313,37 +313,37 @@
     <!-- Custom scripts for all pages-->
     <script src="https://cdn.rawgit.com/BlackrockDigital/startbootstrap-sb-admin/master/js/sb-admin.min.js"></script>
     <!-- Custom scripts for this page-->
-      <script type="text/javascript">
-      $(function() {
+    <script type="text/javascript">
+    $(function() {
 
-          var start = moment().subtract(6, 'days');
-          var end = moment();
+        var start = moment().subtract(6, 'days');
+        var end = moment();
 
-          function cb(start, end) {
-              $('#reportrange span').html(start.format('MMMM D, YYYY') + ' - ' + end.format('MMMM D, YYYY'));
-          }
+        function cb(start, end) {
+            $('#reportrange span').html(start.format('MMMM D, YYYY') + ' - ' + end.format('MMMM D, YYYY'));
+        }
 
-          $('#reportrange').daterangepicker({
-              startDate: start,
-              endDate: end,
-              ranges: {
-                 'Today': [moment(), moment()],
-                 'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
-                 'Last 7 Days': [moment().subtract(6, 'days'), moment()],
-                 'Last 30 Days': [moment().subtract(29, 'days'), moment()],
-                 'This Month': [moment().startOf('month'), moment().endOf('month')],
-                 'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
-              }
-          }, cb);
+        $('#reportrange').daterangepicker({
+            startDate: start,
+            endDate: end,
+            ranges: {
+                'Today': [moment(), moment()],
+                'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+                'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+                'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+                'This Month': [moment().startOf('month'), moment().endOf('month')],
+                'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
+            }
+        }, cb);
 
-          cb(start, end);
+        cb(start, end);
 
-          $('#reportrange').on('apply.daterangepicker', function(ev, picker) {
-              console.log(picker.startDate.format('YYYY-MM-DD'));
-              console.log(picker.endDate.format('YYYY-MM-DD'));
-          });
+        $('#reportrange').on('apply.daterangepicker', function(ev, picker) {
+            console.log(picker.startDate.format('YYYY-MM-DD'));
+            console.log(picker.endDate.format('YYYY-MM-DD'));
+        });
 
-          $('#search_btn').click(function(){
+        $('#search_btn').click(function() {
             /*
             var picker = $('#reportrange').data('daterangepicker');
             console.log(picker.startDate.format('YYYY-MM-DD'));
@@ -355,14 +355,14 @@
                     start_date: picker.startDate.format('YYYY-MM-DD'),
                     end_date: picker.endDate.format('YYYY-MM-DD'),
                     normal: {
-                      high: '0.9',
-                      low: '0.88'
+                    high: '0.9',
+                    low: '0.88'
                     }
-                  }),
+                }),
                 contentType: "application/json; charset=utf-8",
                 dataType: "json",
                 success: function(data){
-                  console.log(data);
+                console.log(data);
                 },
                 failure: function(errMsg) {
                     alert(errMsg);
@@ -370,41 +370,46 @@
             });
             */
             data_table.ajax.reload();
-          });
+        });
 
-          var data_table = $("#dataTable").DataTable({
-            "deferLoading": 0,
-            "serverSide": true,
+        var data_table = $("#dataTable").DataTable({
+            deferLoading: 0,
+            serverSide: true,
             ajax: {
-              type   : "POST",
-              contentType: "application/json",
-              url    : 'http://dicom.icu:5000/selector',
-              dataType: "json",
-              data   : function(d){
-                var picker = $('#reportrange').data('daterangepicker');
-                return JSON.stringify({
-                    start_date: picker.startDate.format('YYYY-MM-DD'),
-                    end_date: picker.endDate.format('YYYY-MM-DD'),
-                    normal: {
-                      high: '0.9',
-                      low: '0.88'
-                    }})
-              },
-              dataSrc: "results"
+                type: "POST",
+                contentType: "application/json",
+                url: 'http://dicom.icu:5000/selector',
+                dataType: "json",
+                data: function(d) {
+                    var picker = $('#reportrange').data('daterangepicker');
+                    return JSON.stringify({
+                        start_date: picker.startDate.format('YYYY-MM-DD'),
+                        end_date: picker.endDate.format('YYYY-MM-DD'),
+                        normal: {
+                            high: '0.9',
+                            low: '0.88'
+                        }
+                    })
+                },
+                dataSrc: "results"
             },
             columns: [
-              {data : "accno"},
-              {data : "examname"},
-              {data : "examdate_str"},
-              {data : "normal", render: $.fn.dataTable.render.number( ',', '.', 5 )},
-              {data : "ett", render: $.fn.dataTable.render.number( ',', '.', 5 )},
-              {data : "port", render: $.fn.dataTable.render.number( ',', '.', 5 )},
-              {data : "cardiomegaly", render: $.fn.dataTable.render.number( ',', '.', 5 )}
+                { data: "accno" },
+                { data: "examname" },
+                { data: "examdate_str" },
+                { data: "normal",
+                  render: $.fn.dataTable.render.number(',', '.', 5) },
+                { data: "ett",
+                  render: $.fn.dataTable.render.number(',', '.', 5) },
+                { data: "port",
+                  render: $.fn.dataTable.render.number(',', '.', 5) },
+                { data: "cardiomegaly",
+                  render: $.fn.dataTable.render.number(',', '.', 5) }
             ],
             order: [ [3, 'desc'] ]
-          });
-      });
-      </script>
+        });
+    });
+    </script>
     </div>
 </body>
 </html>
