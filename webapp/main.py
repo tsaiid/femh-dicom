@@ -146,9 +146,11 @@ WHERE {cond_sql_str}
 ORDER BY normal DESC
 '''.format(start_date=start_date, end_date=end_date, cond_sql_str=cond_sql_str)
 
-            result_dict['response'] = sql
+            #result_dict['response'] = sql
+            results = db.engine.execute(sql)
+            results_list = [dict(r) for r in results]
 
-    return jsonify(result_dict)
+    return jsonify(results_list)
 
 # 判斷自己執行非被當做引入的模組，因為 __name__ 這變數若被當做模組引入使用就不會是 __main__
 if __name__ == '__main__':
