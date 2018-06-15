@@ -370,11 +370,14 @@
             });
             */
             data_table.ajax.reload();
+            //data_table.draw();
         });
 
         var data_table = $("#dataTable").DataTable({
-            deferLoading: 0,
-            serverSide: true,
+            //deferLoading: 0,
+            //serverSide: true,
+            //processing: true,
+            /* FIXME: how to disable init ajax loading */
             ajax: {
                 type: "POST",
                 contentType: "application/json",
