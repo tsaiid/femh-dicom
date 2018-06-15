@@ -233,59 +233,35 @@
           <li class="breadcrumb-item active">My Dashboard</li>
         </ol>
         -->
-        <!-- Example DataTables Card-->
+        <!-- DataTables Card-->
         <div class="card mb-3">
           <div class="card-header">
-            <i class="fa fa-table"></i> Data Table Example</div>
+            <i class="fa fa-table"></i> Selector Results</div>
           <div class="card-body">
             <div class="table-responsive">
               <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
                 <thead>
                   <tr>
-                    <th>Name</th>
-                    <th>Position</th>
-                    <th>Office</th>
-                    <th>Age</th>
-                    <th>Start date</th>
-                    <th>Salary</th>
+                    <th>Accno</th>
+                    <th>Examname</th>
+                    <th>Examdate</th>
+                    <th>Normal</th>
+                    <th>ETT</th>
+                    <th>Port-A</th>
+                    <th>Cardiomegaly</th>
                   </tr>
                 </thead>
                 <tfoot>
                   <tr>
-                    <th>Name</th>
-                    <th>Position</th>
-                    <th>Office</th>
-                    <th>Age</th>
-                    <th>Start date</th>
-                    <th>Salary</th>
-                  </tr>
+                      <th>Accno</th>
+                      <th>Examname</th>
+                      <th>Examdate</th>
+                      <th>Normal</th>
+                      <th>ETT</th>
+                      <th>Port-A</th>
+                      <th>Cardiomegaly</th>
+                    </tr>
                 </tfoot>
-                <tbody>
-                  <tr>
-                    <td>Tiger Nixon</td>
-                    <td>System Architect</td>
-                    <td>Edinburgh</td>
-                    <td>61</td>
-                    <td>2011/04/25</td>
-                    <td>$320,800</td>
-                  </tr>
-                  <tr>
-                    <td>Garrett Winters</td>
-                    <td>Accountant</td>
-                    <td>Tokyo</td>
-                    <td>63</td>
-                    <td>2011/07/25</td>
-                    <td>$170,750</td>
-                  </tr>
-                  <tr>
-                    <td>Ashton Cox</td>
-                    <td>Junior Technical Author</td>
-                    <td>San Francisco</td>
-                    <td>66</td>
-                    <td>2009/01/12</td>
-                    <td>$86,000</td>
-                  </tr>
-                </tbody>
               </table>
             </div>
           </div>
@@ -337,7 +313,6 @@
     <!-- Custom scripts for all pages-->
     <script src="https://cdn.rawgit.com/BlackrockDigital/startbootstrap-sb-admin/master/js/sb-admin.min.js"></script>
     <!-- Custom scripts for this page-->
-    <script src="https://cdn.rawgit.com/BlackrockDigital/startbootstrap-sb-admin/master/js/sb-admin-datatables.min.js"></script>
       <script type="text/javascript">
       $(function() {
 
@@ -369,6 +344,7 @@
           });
 
           $('#search_btn').click(function(){
+            /*
             var picker = $('#reportrange').data('daterangepicker');
             console.log(picker.startDate.format('YYYY-MM-DD'));
             console.log(picker.endDate.format('YYYY-MM-DD'));
@@ -392,6 +368,40 @@
                     alert(errMsg);
                 }
             });
+            */
+            data_table.ajax.reload();
+          });
+
+          var data_table = $("#dataTable").DataTable({
+            "deferLoading": 0,
+            "serverSide": true,
+            ajax: {
+              type   : "POST",
+              contentType: "application/json",
+              url    : 'http://dicom.icu:5000/selector',
+              dataType: "json",
+              data   : function(d){
+                var picker = $('#reportrange').data('daterangepicker');
+                return JSON.stringify({
+                    start_date: picker.startDate.format('YYYY-MM-DD'),
+                    end_date: picker.endDate.format('YYYY-MM-DD'),
+                    normal: {
+                      high: '0.9',
+                      low: '0.88'
+                    }})
+              },
+              dataSrc: "results"
+            },
+            columns: [
+              {data : "accno"},
+              {data : "examname"},
+              {data : "examdate_str"},
+              {data : "normal", render: $.fn.dataTable.render.number( ',', '.', 5 )},
+              {data : "ett", render: $.fn.dataTable.render.number( ',', '.', 5 )},
+              {data : "port", render: $.fn.dataTable.render.number( ',', '.', 5 )},
+              {data : "cardiomegaly", render: $.fn.dataTable.render.number( ',', '.', 5 )}
+            ],
+            order: [ [3, 'desc'] ]
           });
       });
       </script>
