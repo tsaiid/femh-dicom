@@ -198,24 +198,20 @@
               <a class="dropdown-item small" href="#">View all alerts</a>
             </div>
           </li>
-          <li class="nav-item">
-            <form class="form-inline my-2 my-lg-0 mr-lg-2">
-              <div class="input-group">
-                <input class="form-control" type="text" placeholder="Search for...">
-                <span class="input-group-append">
-                  <button class="btn btn-primary" type="button">
-                    <i class="fa fa-search"></i>
-                  </button>
-                </span>
-              </div>
-            </form>
-          </li>
           -->
           <li class="nav-item">
             <div id="reportrange" style="background: #fff; cursor: pointer; padding: 5px 10px; border: 1px solid #ccc; width: 100%">
             <i class="fa fa-calendar"></i>&nbsp;
             <span></span> <i class="fa fa-caret-down"></i>
             </div>
+          </li>
+          <li class="nav-item">
+            <button id="search_btn" class="btn btn-primary" type="button">
+              <!--
+              <i class="fa fa-search"></i>
+              -->
+              Search
+            </button>
           </li>
           <!--
           <li class="nav-item">
@@ -370,6 +366,32 @@
           $('#reportrange').on('apply.daterangepicker', function(ev, picker) {
               console.log(picker.startDate.format('YYYY-MM-DD'));
               console.log(picker.endDate.format('YYYY-MM-DD'));
+          });
+
+          $('#search_btn').click(function(){
+            var picker = $('#reportrange').data('daterangepicker');
+            console.log(picker.startDate.format('YYYY-MM-DD'));
+            console.log(picker.endDate.format('YYYY-MM-DD'));
+            $.ajax({
+                type: "POST",
+                url: "http://dicom.icu:5000/selector",
+                data: JSON.stringify({
+                    start_date: picker.startDate.format('YYYY-MM-DD'),
+                    end_date: picker.endDate.format('YYYY-MM-DD'),
+                    normal: {
+                      high: '0.9',
+                      low: '0.88'
+                    }
+                  }),
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function(data){
+                  console.log(data);
+                },
+                failure: function(errMsg) {
+                    alert(errMsg);
+                }
+            });
           });
       });
       </script>
