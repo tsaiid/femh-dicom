@@ -7,11 +7,16 @@
     <title>Date Range Picker</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
-  <!-- Custom fonts for this template-->
-  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp" crossorigin="anonymous">
-  <!-- Page level plugin CSS-->
-  <link href="https://cdn.datatables.net/1.10.16/css/dataTables.bootstrap4.min.css" rel="stylesheet">
-  <link href="https://cdn.rawgit.com/BlackrockDigital/startbootstrap-sb-admin/master/css/sb-admin.min.css" rel="stylesheet">
+    <!-- Custom fonts for this template-->
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp" crossorigin="anonymous">
+    <!-- Page level plugin CSS-->
+    <link href="https://cdn.datatables.net/1.10.16/css/dataTables.bootstrap4.min.css" rel="stylesheet">
+    <link href="https://cdn.rawgit.com/BlackrockDigital/startbootstrap-sb-admin/master/css/sb-admin.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.rawgit.com/nitinhayaran/jRange/master/jquery.range.css">
+    <style>
+        .slider-container { margin-left: 10%; }
+        #mainNav .navbar-collapse .navbar-sidenav>.nav-item { margin-bottom: 2rem; }
+    </style>
 </head>
 <body class="fixed-nav sticky-footer bg-dark" id="page-top">
     <!-- Navigation-->
@@ -22,6 +27,7 @@
       </button>
       <div class="collapse navbar-collapse" id="navbarResponsive">
         <ul class="navbar-nav navbar-sidenav" id="exampleAccordion">
+            <!--
           <li class="nav-item" data-toggle="tooltip" data-placement="right" title="Dashboard">
             <a class="nav-link" href="index.html">
               <i class="fa fa-fw fa-dashboard"></i>
@@ -105,12 +111,39 @@
               </li>
             </ul>
           </li>
-          <li class="nav-item" data-toggle="tooltip" data-placement="right" title="Link">
-            <a class="nav-link" href="#">
-              <i class="fa fa-fw fa-link"></i>
-              <span class="nav-link-text">Link</span>
-            </a>
-          </li>
+          -->
+            <li class="nav-item" data-toggle="tooltip" data-placement="right" title="Link">
+                <a class="nav-link" href="#">
+                    <i class="fa fa-fw fa-link"></i>
+                    <span class="nav-link-text">Normal</span>
+                    <span><input type="checkbox" id="chkbox_normal" class="float-right" checked="checked" value="" /></span>
+                </a>
+                <input type="hidden" class="range-slider" id="normal_range" value="80,90" />
+            </li>
+            <li class="nav-item" data-toggle="tooltip" data-placement="right" title="Link">
+                <a class="nav-link" href="#">
+                    <i class="fa fa-fw fa-link"></i>
+                    <span class="nav-link-text">ETT</span>
+                    <span><input type="checkbox" id="chkbox_ett" class="float-right" value="" /></span>
+                </a>
+                <input type="hidden" class="range-slider" id="ett_range" value="80,90" />
+            </li>
+            <li class="nav-item" data-toggle="tooltip" data-placement="right" title="Link">
+                <a class="nav-link" href="#">
+                    <i class="fa fa-fw fa-link"></i>
+                    <span class="nav-link-text">Port-A</span>
+                    <span><input type="checkbox" id="chkbox_port" class="float-right" value="" /></span>
+                </a>
+                <input type="hidden" class="range-slider" id="port_range" value="80,90" />
+            </li>
+            <li class="nav-item" data-toggle="tooltip" data-placement="right" title="Link">
+                <a class="nav-link" href="#">
+                    <i class="fa fa-fw fa-link"></i>
+                    <span class="nav-link-text">Cardiomegaly</span>
+                    <span><input type="checkbox" id="chkbox_cardiomegaly" class="float-right" value="" /></span>
+                </a>
+                <input type="hidden" class="range-slider" id="cardiomegaly_range" value="80,90" />
+            </li>
         </ul>
         <ul class="navbar-nav sidenav-toggler">
           <li class="nav-item">
@@ -310,6 +343,7 @@
     <!-- Page level plugin JavaScript-->
     <script src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.10.16/js/dataTables.bootstrap4.min.js"></script>
+    <script src="https://cdn.rawgit.com/nitinhayaran/jRange/master/jquery.range-min.js"></script>
     <!-- Custom scripts for all pages-->
     <script src="https://cdn.rawgit.com/BlackrockDigital/startbootstrap-sb-admin/master/js/sb-admin.min.js"></script>
     <!-- Custom scripts for this page-->
@@ -337,6 +371,17 @@
         }, cb);
 
         cb(start, end);
+
+        $('.range-slider').jRange({
+            from: 0,
+            to: 100,
+            step: 1,
+            scale: [0,25,50,75,100],
+            format: '%s',
+            width: '200',
+            showLabels: true,
+            isRange : true
+        });
 
         $('#reportrange').on('apply.daterangepicker', function(ev, picker) {
             console.log(picker.startDate.format('YYYY-MM-DD'));
@@ -385,14 +430,23 @@
                 dataType: "json",
                 data: function(d) {
                     var picker = $('#reportrange').data('daterangepicker');
-                    return JSON.stringify({
+                    let date_query_obj = {
                         start_date: picker.startDate.format('YYYY-MM-DD'),
-                        end_date: picker.endDate.format('YYYY-MM-DD'),
-                        normal: {
-                            high: '0.9',
-                            low: '0.88'
+                        end_date: picker.endDate.format('YYYY-MM-DD')
+                    };
+                    var cond_query_obj = {};
+                    ['normal', 'ett', 'port', 'cardiomegaly'].forEach(function(cat) {
+                        //console.log(cat);
+                        if ($('#chkbox_' + cat).prop("checked")) {
+                            var [low, high] = $('#'+cat+'_range').val().split(',');
+                            cond_query_obj[cat] = {};
+                            cond_query_obj[cat]['low'] = low / 100;
+                            cond_query_obj[cat]['high'] = high / 100;
                         }
-                    })
+                    });
+                    let merged_query_obj = {...date_query_obj, ...cond_query_obj};
+                    console.log(merged_query_obj);
+                    return JSON.stringify(merged_query_obj);
                 },
                 dataSrc: "results"
             },
