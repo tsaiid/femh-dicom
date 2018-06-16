@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from config import DevConfig
@@ -84,6 +86,23 @@ def selector():
         if not start_date or not end_date:
             result_dict['reason'] = 'date range error'
         else:
+            def get_category_limit_sql(category, query):
+                limit_sql = None
+                category_dict = query.get(category)
+                if category_dict:
+                    high_limit = category_dict.get('high')
+                    low_limit = category_dict.get('low')
+                    if (high_limit and low_limit):
+                        limit_sql = '({cat} <= {high} AND {cat} >= {low})'.format(cat=category, high=high_limit, low=low_limit)
+                return limit_sql
+
+            cond_list = [get_category_limit_sql(cat, query) \
+                            for cat in ('normal', 'ett', 'port', 'cardiomegaly') \
+                            if get_category_limit_sql(cat, query)]
+
+            cond_list.append('(ROWNUM <= 100)')
+            cond_sql_str = ' AND '.join(cond_list)
+
             sql = '''
 SELECT *
 FROM (
@@ -123,44 +142,15 @@ PIVOT (
                      'cxr-port-a' port,
                      'cxr-cardiomegaly' cardiomegaly)
 )
+WHERE {cond_sql_str}
 ORDER BY normal DESC
-'''.format(start_date=start_date, end_date=end_date)
+'''.format(start_date=start_date, end_date=end_date, cond_sql_str=cond_sql_str)
 
-            cond_list = []
-            normal = query.get('normal')
-            if normal:
-                normal_up = normal.get('up')
-                normal_down = normal.get('down')
-                if (normal_up and normal_down):
-                    cond_list.append('(normal <= {up} AND normal >= {down})'.format(up=normal_up, down=normal_down))
+            #result_dict['response'] = sql
+            results = db.engine.execute(sql)
+            results_list = [dict(r) for r in results]
 
-            ett = query.get('ett')
-            if ett:
-                ett_up = ett.get('up')
-                ett_down = ett.get('down')
-                if (ett_up and ett_down):
-                    cond_list.append('(normal <= {up} AND normal >= {down})'.format(up=ett_up, down=ett_down))
-
-            port = query.get('port')
-            if port:
-                port_up = port.get('up')
-                port_down = port.get('down')
-                if (port_up and port_down):
-                    cond_list.append('(normal <= {up} AND normal >= {down})'.format(up=port_up, down=port_down))
-
-            cardiomegaly = query.get('cardiomegaly')
-            if cardiomegaly:
-                cardiomegaly_up = cardiomegaly.get('up')
-                cardiomegaly_down = cardiomegaly.get('down')
-                if (cardiomegaly_up and cardiomegaly_down):
-                    cond_list.append('(normal <= {up} AND normal >= {down})'.format(up=cardiomegaly_up, down=cardiomegaly_down))
-
-            cond_list.append('(ROWNUM <= 100)')
-            cond_sql_str = ' AND '.join(cond_list)
-
-            result_dict['response'] = sql
-
-    return jsonify(result_dict)
+    return jsonify(results_list)
 
 # 判斷自己執行非被當做引入的模組，因為 __name__ 這變數若被當做模組引入使用就不會是 __main__
 if __name__ == '__main__':
