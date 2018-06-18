@@ -1,6 +1,7 @@
 # This project
 config/
 db/
+gh-pages/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
