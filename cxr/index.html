@@ -399,7 +399,7 @@
             console.log(picker.endDate.format('YYYY-MM-DD'));
             $.ajax({
                 type: "POST",
-                url: "http://dicom.icu:5000/selector",
+                url: "https://dicom.icu:5000/selector",
                 data: JSON.stringify({
                     start_date: picker.startDate.format('YYYY-MM-DD'),
                     end_date: picker.endDate.format('YYYY-MM-DD'),
@@ -430,7 +430,7 @@
             ajax: {
                 type: "POST",
                 contentType: "application/json",
-                url: 'http://dicom.icu:5000/selector',
+                url: 'https://dicom.icu:5000/selector',
                 dataType: "json",
                 data: function(d) {
                     var picker = $('#reportrange').data('daterangepicker');
