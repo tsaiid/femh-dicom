@@ -21,6 +21,7 @@ from sqlalchemy.orm.exc import MultipleResultsFound
 from sqlalchemy.exc import IntegrityError
 from mldbcls import MLPrediction
 import time
+from tqdm import tqdm
 
 session = None
 _use_db = None
@@ -164,7 +165,7 @@ def main():
 
     # load all models
     global _keras_models
-    _keras_models = [CxrKerasModel(m, w) for m in cfg['model'] for w in m['weight']]
+    _keras_models = [CxrKerasModel(m, w) for m in tqdm(cfg['model'], ascii=True) for w in tqdm(m['weight'], ascii=True)]
     print('{} models loaded.'.format(len(_keras_models)))
     for i, m in enumerate(_keras_models):
         print("{}. {} {} {} {}".format(i, m.model_name, m.model_ver, m.weight_name, m.weight_ver))
@@ -179,7 +180,7 @@ def main():
         results.extend(single_results)
     elif (isdir(path)):
         files = listdir(path)
-        for f in files:
+        for f in tqdm(files, ascii=True):
             fullpath = join(path, f)
             if isfile(fullpath):
                 single_results = do_predict(fullpath)

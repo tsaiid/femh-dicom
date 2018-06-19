@@ -22,7 +22,7 @@ import sys
 import hashlib
 from cxrcaffemodel import CxrCaffeModel
 from dcmconv import get_LUT_value, get_PIL_mode, get_rescale_params
-
+from tqdm import tqdm
 
 session = None
 _use_db = None
@@ -138,7 +138,7 @@ def main():
     # load all models
     global _caffe_models
     caffe.set_mode_cpu()
-    _caffe_models = [CxrCaffeModel(m) for m in cfg['caffemodel']]
+    _caffe_models = [CxrCaffeModel(m) for m in tqdm(cfg['caffemodel'], ascii=True)]
     print('{} models loaded.'.format(len(_caffe_models)))
     for i, m in enumerate(_caffe_models):
         print("{}. {} {} {} {}".format(i, m.model_name, m.model_ver, m.weight_name, m.weight_ver))
@@ -153,7 +153,7 @@ def main():
         results.extend(single_results)
     elif (isdir(path)):
         files = listdir(path)
-        for f in files:
+        for f in tqdm(files, ascii=True):
             fullpath = join(path, f)
             if isfile(fullpath):
                 single_results = do_forward(fullpath)
