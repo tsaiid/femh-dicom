@@ -18,6 +18,7 @@ import cx_Oracle
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.exc import MultipleResultsFound
+from sqlalchemy.exc import IntegrityError
 from mldbcls import MLPrediction
 import time
 
@@ -215,7 +216,7 @@ def main():
                                         PROBABILITY=r['probability'] ))
             try:
                 session.commit()
-            except sqlalchemy.exc.IntegrityError:
+            except IntegrityError:
                 print('sqlalchemy.exc.IntegrityError: {}'.format(r))
         else:
             print(r)
