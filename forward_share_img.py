@@ -1,3 +1,5 @@
+import os
+os.environ["GLOG_minloglevel"] = "3"
 import numpy as np
 import caffe
 import cv2
@@ -13,6 +15,7 @@ from mldbcls import MLPrediction
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.exc import MultipleResultsFound
+from sqlalchemy.exc import IntegrityError
 from os import listdir
 from os.path import isfile, isdir, join, expanduser
 import sys
@@ -183,7 +186,10 @@ def main():
                                         WEIGHTS_VER=r['weight_ver'],
                                         CATEGORY=r['category'],
                                         PROBABILITY=r['probability'] ))
-            session.commit()
+            try:
+                session.commit()
+            except IntegrityError:
+                print('sqlalchemy.exc.IntegrityError: {}'.format(r))
         else:
             print(r)
 
