@@ -2,6 +2,7 @@
 config/
 db/
 gh-pages/
+webapp/ssl/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
