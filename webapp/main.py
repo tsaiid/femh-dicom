@@ -2,6 +2,7 @@
 
 from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
+from flask_cors import cross_origin
 from config import DevConfig
 from sqlalchemy import text
 
@@ -77,6 +78,7 @@ def get_probability(accno):
     return jsonify(result_dict)
 
 @app.route('/selector', methods=['POST'])
+@cross_origin()
 def selector():
     result_dict = {'success': 0, 'reason': 'nil'}
     if request.is_json:
@@ -149,9 +151,11 @@ ORDER BY normal DESC
             #result_dict['response'] = sql
             results = db.engine.execute(sql)
             results_list = [dict(r) for r in results]
+            result_dict['success'] = 1
+            result_dict['results'] = results_list
 
-    return jsonify(results_list)
+    return jsonify(result_dict)
 
 # 判斷自己執行非被當做引入的模組，因為 __name__ 這變數若被當做模組引入使用就不會是 __main__
 if __name__ == '__main__':
-    app.run(host='0.0.0.0')
+    app.run(host='0.0.0.0', ssl_context=('ssl/fullchain.pem', 'ssl/privkey.pem'))
