@@ -50,7 +50,7 @@ def retrieve_study(cfg, acc_no, output_dir):
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
-        sys.exit("no argv")
+        sys.exit("argv: acc_no output_dir")
 
     # load cfg
     yml_path = os.path.join('config', 'pacs.yml')
