@@ -15,7 +15,7 @@ from mldbcls import MLPrediction
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.exc import MultipleResultsFound
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, InvalidRequestError
 from os import listdir
 from os.path import isfile, isdir, join, expanduser
 import sys
@@ -76,7 +76,11 @@ def do_forward(path):
             small_img = img.resize(target_size).convert('L')
             if ds.PhotometricInterpretation == 'MONOCHROME1':
                 small_img = invert(small_img)
-            small_imgs_arr[target_size] = np.array(small_img.convert('RGB')).reshape(-1, 3, model.width, model.height)
+            transformer = caffe.io.Transformer({'data': model.net.blobs['data'].data.shape})
+            transformer.set_transpose('data', (2,0,1))
+            #transformer.set_raw_scale('data', 255)
+            transformer.set_channel_swap('data', (2,1,0))
+            small_imgs_arr[target_size] = transformer.preprocess('data', np.array(small_img.convert('RGB')).astype(np.float32))
 
     for model in _caffe_models:
         # check if exists
@@ -93,7 +97,8 @@ def do_forward(path):
                 print("{} {} {} exists, skip.".format(acc_no, model_name, weight_name))
                 continue
 
-        res = model.net.forward(data = np.asarray([small_imgs_arr[(model.width, model.height)]]))
+        model.net.blobs['data'].data[...] = small_imgs_arr[(model.width, model.height)]
+        res = model.net.forward()
         result = { 'acc_no': acc_no,
                    'model_name': model_name,
                    'model_ver': model_ver,
@@ -101,6 +106,7 @@ def do_forward(path):
                    'weight_ver': weight_ver,
                    'category': category,
                    'probability': res['loss3/prob'][0][1]  }
+
         results.append(result)
     return results
 
@@ -122,7 +128,6 @@ def main():
     if _use_db:
         # init db engine
         global session
-        #db_path = cfg['sqlite']['path']
         oracle_conn_str = 'oracle+cx_oracle://{username}:{password}@{dsn_str}'
         dsn_str = cx_Oracle.makedsn(cfg['oracle']['ip'], cfg['oracle']['port'], cfg['oracle']['service_name']).replace('SID', 'SERVICE_NAME')
         engine = create_engine(
@@ -190,6 +195,9 @@ def main():
                 session.commit()
             except IntegrityError:
                 print('sqlalchemy.exc.IntegrityError: {}'.format(r))
+            except InvalidRequestError:
+                session.rollback()
+                print('sqlalchemy.exc.InvalidRequestError: {}'.format(r))
         else:
             print(r)
 
