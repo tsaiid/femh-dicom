@@ -12,16 +12,22 @@ import sys
 import time
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
 import errno
+from mptqdm import parallel_process
 
 def read_dcm_to_image(ds_or_file):
     if isinstance(ds_or_file, FileDataset):
         ds = ds_or_file
+        debug_name = ds.get('AccessionNumber', 'No AccNo available')
     elif isinstance(ds_or_file, str):
-        ds = pydicom.dcmread(filename)
+        ds = pydicom.dcmread(ds_or_file)
+        debug_name = ds_or_file
     else:
         raise
 
-    im_arr = ds.pixel_array
+    try:
+        im_arr = ds.pixel_array
+    except AttributeError as e:
+        print('{}: ds.pixel_array error. {}'.format(debug_name, str(e)))
 
     rescale_intercept, rescale_slope = get_rescale_params(ds)
     data = get_LUT_value(im_arr, ds.WindowWidth, ds.WindowCenter, rescale_intercept, rescale_slope)
@@ -42,7 +48,7 @@ def do_convert(filename, img_out_path, img_out_width=1024, img_out_square=True):
     ds_ri = ds.RescaleIntercept if 'RescaleIntercept' in ds else None
     ds_rs = ds.RescaleSlope if 'RescaleSlope' in ds else None
     ds_uid = ds.SOPInstanceUID if 'SOPInstanceUID' in ds else None
-    print(filename, "AccNo:", ds_an, "PI:", ds_pi, "WW:", ds_ww, "WC:", ds_wc, "RI:", ds_ri, "RS:", ds_rs)
+    #print(filename, "AccNo:", ds_an, "PI:", ds_pi, "WW:", ds_ww, "WC:", ds_wc, "RI:", ds_ri, "RS:", ds_rs)
     img_out_fullpath = join(img_out_path, ds_an + '.png')
     if not exists(dirname(img_out_fullpath)):
         try:
@@ -51,7 +57,10 @@ def do_convert(filename, img_out_path, img_out_width=1024, img_out_square=True):
             if exc.errno != errno.EEXIST:
                 raise
 
-    img = read_dcm_to_image(ds)
+    try:
+        img = read_dcm_to_image(ds)
+    except:
+        return
 
     # calculate resize image width/height
     img_width, img_height = img.size
@@ -85,30 +94,9 @@ def main():
     if isfile(img_path):
         do_convert(img_path, img_out_path, img_out_width, img_out_square)
     elif isdir(img_path):
-        with ProcessPoolExecutor() as executor:
-            files = [join(img_path, f) for f in listdir(img_path) if isfile(join(img_path, f))]
-
-            futures = [executor.submit(do_convert, f, img_out_path, img_out_width, img_out_square) for f in files]
-
-            for future in as_completed(futures):
-                try:
-                    future.result()
-                    #err = future.exception()
-                    #if err is not None:
-                    #    raise err
-                except KeyboardInterrupt:
-                    # non-graceful shutdown
-                    # https://gist.github.com/clchiou/f2608cbe54403edb0b13
-                    print("stopped by hand")
-                    executor._threads.clear()
-                    concurrent.futures.thread._threads_queues.clear()
-
-        """
-        for f in files:
-            fullpath = join(img_path, f)
-            if isfile(fullpath):
-                do_convert(fullpath, img_out_path)
-        """
+        files = [join(img_path, f) for f in listdir(img_path) if isfile(join(img_path, f))]
+        arr = [{'filename': f, 'img_out_path': img_out_path, 'img_out_width': img_out_width, 'img_out_square': img_out_square} for f in files]
+        parallel_process(arr, do_convert, use_kwargs=True)
 
     t_end = time.time()
     t_total = t_end - t_start
