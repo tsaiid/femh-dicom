@@ -18,7 +18,7 @@ import cx_Oracle
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.exc import MultipleResultsFound
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, InvalidRequestError
 from mldbcls import MLPrediction
 import time
 from tqdm import tqdm
@@ -82,7 +82,7 @@ def do_predict(path):
         if _use_db:
             is_exist = check_if_pred_exists(acc_no, model_name, model_ver, weight_name, weight_ver, category)
             if is_exist:
-                print("{} {} {} exists, skip.".format(acc_no, model_name, weight_name))
+                #print("{} {} {} exists, skip.".format(acc_no, model_name, weight_name))
                 continue
 
         """
@@ -219,6 +219,9 @@ def main():
                 session.commit()
             except IntegrityError:
                 print('sqlalchemy.exc.IntegrityError: {}'.format(r))
+            except InvalidRequestError:
+                session.rollback()
+                print('sqlalchemy.exc.InvalidRequestError: {}'.format(r))
         else:
             print(r)
 
