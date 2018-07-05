@@ -64,7 +64,7 @@ def main():
 
     df['prob'] = df.progress_apply(_calc_prob, axis=1)
     df = df.sort_values(by='prob', ascending=False)
-    df.to_csv(csv_out_path)
+    df.to_csv(csv_out_path, index=False)
     #print(df)
 
 if __name__ == "__main__":

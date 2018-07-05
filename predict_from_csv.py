@@ -14,7 +14,8 @@ def global_keras_init():
     global _model
 
     model_path = 'models/keras/cxr-binary-classifier.h5'
-    weights_path = 'models/keras/weights/fake-224-densenet121-32-nipple3k.h5'
+    weights_path = 'models/keras/weights/fake-224-densenet121-32-nipple3k-pastereal.h5'
+    #weights_path = 'models/keras/weights/fake-224-densenet121-32-nipple3k.h5'
     _model = load_model(model_path)
     _model.load_weights(weights_path)
 
@@ -53,7 +54,7 @@ def main():
 
     df['prob'] = df.progress_apply(_calc_prob, axis=1)
     df = df.sort_values(by='prob', ascending=False)
-    df.to_csv(csv_out_path)
+    df.to_csv(csv_out_path, index=False)
     #print(df)
 
 if __name__ == "__main__":
