@@ -7,8 +7,7 @@ from keras.models import load_model
 from keras.preprocessing.image import img_to_array
 from keras.applications.densenet import preprocess_input
 import sys
-from os import listdir
-from os.path import isfile, isdir, join, expanduser
+import os
 import yaml
 import json
 from cxrkerasmodel import CxrKerasModel
@@ -143,7 +142,7 @@ def main():
     t_start = time.time()
 
     # load cfg
-    yml_path = join('config', 'cxr.yml')
+    yml_path = os.path.join('config', 'cxr.yml')
     with open(yml_path, 'r') as ymlfile:
         cfg = yaml.load(ymlfile)
 
@@ -175,14 +174,16 @@ def main():
 
     path = sys.argv[1]
     results = []
-    if (isfile(path)):
+    if (os.path.isfile(path)):
         single_results = do_predict(path)
         results.extend(single_results)
-    elif (isdir(path)):
-        files = listdir(path)
-        for f in tqdm(files, ascii=True):
-            fullpath = join(path, f)
-            if isfile(fullpath):
+    elif (os.path.isdir(path)):
+        list_files = []
+        for root, dirs, files in os.walk(path):
+            for f in files:
+                list_files.append(os.path.join(root, f))
+        for fullpath in tqdm(list_files, ascii=True):
+            if os.path.isfile(fullpath):
                 single_results = do_predict(fullpath)
                 results.extend(single_results)
 
