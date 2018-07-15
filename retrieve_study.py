@@ -15,18 +15,27 @@ def retrieve_study(cfg, acc_no, output_dir):
                 raise
 
     ae = AE(scu_sop_class=QueryRetrieveSOPClassList, ae_title=cfg['pacs']['my']['aet'])
-    assoc = ae.associate(cfg['pacs']['called']['ip'], cfg['pacs']['called']['port'])
-    ds = Dataset()
-    ds.AccessionNumber = acc_no
-    ds.QueryRetrieveLevel = "SERIES"
-    ds.Modality = ""
-    responses = assoc.send_c_find(ds, query_model='P')
-    for (status, dataset) in responses:
-        if status.Status in (0xFF00, 0xFF01):
-            modality = dataset.Modality
+    assoc_cf = ae.associate(cfg['pacs']['called']['ip'], cfg['pacs']['called']['port'])
+    assoc_cm = ae.associate(cfg['pacs']['called']['ip'], cfg['pacs']['called']['port'])
+    ds_q = Dataset()
+    ds_q.AccessionNumber = acc_no
+    ds_q.QueryRetrieveLevel = "SERIES"
+    ds_q.Modality = ""
+    responses_cf = assoc_cf.send_c_find(ds_q, query_model='P')
+    for (status_cf, dataset_cf) in responses_cf:
+        if status_cf.Status in (0xFF00, 0xFF01):
+            modality = dataset_cf.Modality
             if modality not in ('CR', 'DX'):
                 continue
 
+            responses_cm = assoc_cm.send_c_move(dataset_cf, cfg['pacs']['my']['aet'], query_model='P')
+            for (status_cm, dataset_cm) in responses_cm:
+                if (status_cm.Status == 0x0):
+                    pass
+                else:
+                    print('status: {}; dataset: {}'.format(status_cm, dataset_cm))
+
+            """
             p_id = dataset.PatientID
             study_uid = dataset.StudyInstanceUID
             series_uid = dataset.SeriesInstanceUID
@@ -44,9 +53,12 @@ def retrieve_study(cfg, acc_no, output_dir):
             #print(cmd_str)
             os.system(cmd_str)
             #print("Success. acc_no={}".format(acc_no))
-        elif status.Status != 0x0:
-            print("acc_no={}, status={}".format(acc_no, hex(status.Status)))
-    assoc.release()
+            """
+
+        elif status_cf.Status != 0x0:
+            print("acc_no={}, status={}".format(acc_no, hex(status_cf.Status)))
+    assoc_cf.release()
+    assoc_cm.release()
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
