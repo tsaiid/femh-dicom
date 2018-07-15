@@ -30,7 +30,7 @@ def try_parsing_date_range(text):
 def main():
     if len(sys.argv) < 3:
         print
-        sys.exit("no argv")
+        sys.exit("argv: date_or_daterange output_dir")
 
     # load cfg
     yml_path = os.path.join('config', 'cxr.yml')
