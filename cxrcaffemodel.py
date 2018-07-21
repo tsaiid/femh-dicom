@@ -10,3 +10,10 @@ class CxrCaffeModel():
         self.category = model_cfg['category']
         self.width = model_cfg['width']
         self.height = model_cfg['height']
+
+        # init transformer
+        self.transformer = caffe.io.Transformer({'data': self.net.blobs['data'].data.shape})
+        self.transformer.set_transpose('data', (2,0,1))
+        #self.transformer.set_mean('data', np.load(mean_file).mean(1).mean(1))
+        self.transformer.set_raw_scale('data', 255)
+        #self.transformer.set_channel_swap('data', (2,1,0))
