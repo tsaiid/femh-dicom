@@ -14,21 +14,24 @@ def global_keras_init():
     global _model
 
     model_path = 'models/keras/cxr-binary-classifier.h5'
-    weights_path = 'models/keras/weights/fake-224-densenet121-32-nipple3k-pastereal.h5'
-    #weights_path = 'models/keras/weights/fake-224-densenet121-32-nipple3k.h5'
+    #weights_path = 'models/keras/weights/femh-224-densenet121-32-ekg.h5'
+    weights_path = 'models/keras/weights/femh-224-densenet121-32.h5'
     _model = load_model(model_path)
     _model.load_weights(weights_path)
 
 def do_predict(png_path):
     global _model
 
-    img = image.load_img(png_path, target_size = (224, 224))
-    x = image.img_to_array(img)
-    x = np.expand_dims(x, axis=0)
-    x = preprocess_input(x)
-    preds = _model.predict(x)
+    try: 
+        img = image.load_img(png_path, target_size = (224, 224))
+        x = image.img_to_array(img)
+        x = np.expand_dims(x, axis=0)
+        x = preprocess_input(x)
+        preds = _model.predict(x)
+    except:
+        preds = None
 
-    return preds 
+    return preds[0][0] 
 
 def main():
     if len(sys.argv) is not 4:
@@ -48,7 +51,7 @@ def main():
         png_path = os.path.join(png_dirpath, row['ACCNO'] + '.png')
         res = do_predict(png_path)
         
-        return res[0][0] 
+        return res or None
 
     tqdm.pandas()
 
