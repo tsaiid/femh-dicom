@@ -1,5 +1,6 @@
 # This project
 config/
+models/
 db/
 gh-pages/
 webapp/ssl/
