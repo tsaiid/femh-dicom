@@ -27,6 +27,7 @@ from tqdm import tqdm
 session = None
 _use_db = None
 _caffe_models = None
+_transformer = None
 
 def read_dcm_to_image(ds_or_file):
     if isinstance(ds_or_file, FileDataset):
@@ -64,6 +65,8 @@ def check_if_pred_exists(acc_no, model_name, model_ver, weight_name, weight_ver,
 
 def do_forward(path):
     global _caffe_models
+    global _transformer
+
     results = []
     ds, img = read_dcm_to_image(path)
     acc_no = ds.get('AccessionNumber', None)
@@ -76,11 +79,16 @@ def do_forward(path):
             small_img = img.resize(target_size).convert('L')
             if ds.PhotometricInterpretation == 'MONOCHROME1':
                 small_img = invert(small_img)
-            transformer = caffe.io.Transformer({'data': model.net.blobs['data'].data.shape})
-            transformer.set_transpose('data', (2,0,1))
-            #transformer.set_raw_scale('data', 255)
-            transformer.set_channel_swap('data', (2,1,0))
-            small_imgs_arr[target_size] = transformer.preprocess('data', np.array(small_img.convert('RGB')).astype(np.float32))
+            _transformer = caffe.io.Transformer({'data': model.net.blobs['data'].data.shape})
+            _transformer.set_transpose('data', (2,0,1))
+            #_transformer.set_mean('data', np.load(mean_file).mean(1).mean(1))
+            _transformer.set_raw_scale('data', 255)
+            #_transformer.set_channel_swap('data', (2,1,0))
+            #small_imgs_arr[target_size] = _transformer.preprocess('data', np.array(small_img.convert('RGB')).astype(np.float32))
+            small_img_arr = np.array(small_img).astype(np.float32)
+            if small_img_arr.ndim == 2:
+                small_img_arr = small_img_arr[:, :, np.newaxis]
+            small_imgs_arr[target_size] = _transformer.preprocess('data', small_img_arr)
 
     for model in _caffe_models:
         # check if exists

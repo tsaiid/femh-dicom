@@ -1,5 +1,5 @@
 import os
-#os.environ["GLOG_minloglevel"] = "3"
+os.environ["GLOG_minloglevel"] = "3"
 import pandas as pd
 import numpy as np
 import caffe
@@ -14,8 +14,8 @@ def global_caffe_init():
 
     caffe.set_mode_cpu()
 
-    deploy_prototxt_file_path = 'models/caffe/quanta-1024-inception-v3-normal.prototxt'
-    caffe_model_file_path = 'models/caffe/quanta-1024-inception-v3-normal.caffemodel'
+    deploy_prototxt_file_path = 'models/caffe/quanta-1024-inception-v3-normal-30k.prototxt'
+    caffe_model_file_path = 'models/caffe/quanta-1024-inception-v3-normal-30k.caffemodel'
     #deploy_prototxt_file_path = 'models/caffe/quanta-1024-inception-v3-cardiomegaly.prototxt'
     #caffe_model_file_path = 'models/caffe/quanta-1024-inception-v3-cardiomegaly.caffemodel'
     _net = caffe.Net(deploy_prototxt_file_path, caffe_model_file_path, caffe.TEST)
@@ -25,13 +25,13 @@ def global_caffe_init():
     _transformer.set_transpose('data', (2,0,1))    #改变维度的顺序，由原始图片(28,28,3)变为(3,28,28)
     #transformer.set_mean('data', np.load(mean_file).mean(1).mean(1))    #减去均值，前面训练模型时没有减均值，这儿就不用
     _transformer.set_raw_scale('data', 255)    # 缩放到[0，255]之间
-    _transformer.set_channel_swap('data', (2,1,0))   #交换通道，将图片由RGB变为BGR
+    #_transformer.set_channel_swap('data', (2,1,0))   #交换通道，将图片由RGB变为BGR
 
 def do_forward(png_path):
     global _net
     global _transformer
 
-    img = caffe.io.load_image(png_path)                   #加载图片
+    img = caffe.io.load_image(png_path, color=False)                   #加载图片
     _net.blobs['data'].data[...] = _transformer.preprocess('data', img)      #执行上面设置的图片预处理操作，并将图片载入到blob中
 
     #执行测试
