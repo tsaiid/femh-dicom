@@ -1,5 +1,4 @@
-from pynetdicom3 import AE
-from pynetdicom3 import QueryRetrieveSOPClassList
+from pynetdicom3 import AE, QueryRetrievePresentationContexts
 from pydicom.dataset import Dataset
 import yaml
 import os
@@ -14,7 +13,8 @@ def retrieve_study(cfg, acc_no, output_dir):
             if exc.errno != errno.EEXIST:
                 raise
 
-    ae = AE(scu_sop_class=QueryRetrieveSOPClassList, ae_title=cfg['pacs']['my']['aet'])
+    ae = AE(ae_title=cfg['pacs']['my']['aet'])
+    ae.requested_contexts = QueryRetrievePresentationContexts
     assoc = ae.associate(cfg['pacs']['called']['ip'], cfg['pacs']['called']['port'])
     ds = Dataset()
     ds.AccessionNumber = acc_no
