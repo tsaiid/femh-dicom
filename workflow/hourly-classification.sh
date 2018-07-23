@@ -1,23 +1,37 @@
 #!/bin/bash
 
 # Config
+WORKDIR=/app
 DCM_TMPDIR=/dcm_tmpdir
 IMG_PNG_1024_PATH=/imgsrv/png/1024
 IMG_PNG_1500_PATH=/imgsrv/png/1500
 
+# Script
+PYTHON3=/usr/bin/python3
+FIND=/usr/bin/find
+DCM_RETRIEVER=/app/retrieve_cxr_by_datehour_dcmtk.py
+CAFFE_FORWARDER=/app/convert-then-forward.py
+KERAS_PREDICTER=/app/predict_share_img.py
+PNG_CONVERTER=/app/convert_png_mp.py
+
+cd $WORKDIR
 # Start storescu
-python3 storescu.py ------ &
+# python3 storescu.py ------ &
 
 # Retrieve images
-DATEHOUR=date -d '1 hour ago' "+%Y-%m-%d %H"
-retrieve_cxr_by_date_hour.py $DATEHOUR $DCM_TMPDIR
+DATEHOUR=$(TZ="Asia/Taipei" date -d '1 hour ago' "+%Y-%m-%d %H")
+$PYTHON3 $DCM_RETRIEVER $DATEHOUR $DCM_TMPDIR
 
-# Caffe model forwarding
-python3 forward_share_img.py $DCM_TMPDIR 1
+# Convert 1024 png and then Caffe model forwarding 
+$PYTHON3 $CAFFE_FORWARDER $DCM_TMPDIR $IMG_PNG_1024_PATH 1
 
 # Keras model predicting
-python3 predict_share_img.py $DCM_TMPDIR 1
+$PYTHON3 $KERAS_PREDICTER $DCM_TMPDIR 1
 
 # Convert images
-python3 convert_png_mp.py $DCM_TMPDIR $IMG_PNG_1024_PATH 1024 1
-python3 convert_png_mp.py $DCM_TMPDIR $IMG_PNG_1500_PATH 1024 0
+## Only need to convert 1500 png. 1024 was done with Caffe forwarding
+#$PYTHON3 $DCM_TMPDIR $IMG_PNG_1024_PATH 1024 1
+$PYTHON3 $PNG_CONVERTER $DCM_TMPDIR $IMG_PNG_1500_PATH 1024 0
+
+# Remove old png images > 30 days
+$FIND $IMG_PNG_1024_PATH $IMG_PNG_1500_PATH -maxdepth 1 -mtime +30 -type f -delete
