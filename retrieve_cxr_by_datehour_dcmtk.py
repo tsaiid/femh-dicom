@@ -17,7 +17,7 @@ def try_parsing_date_hour(text):
     raise ValueError('no valid date format found')
 
 def main():
-    if len(sys.argv) < 3:
+    if len(sys.argv) < 4:
         print
         sys.exit("argv: date hour output_dir")
 
