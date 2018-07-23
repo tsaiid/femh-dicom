@@ -41,10 +41,10 @@ def global_caffe_init(cfg):
         print("{}. {} {} {} {}".format(i, m.model_name, m.model_ver, m.weight_name, m.weight_ver))
 
 def check_if_pred_exists(acc_no, model_name, model_ver, weight_name, weight_ver, category):
-    global session
+    global _session
 
     try:
-        exists = session.query(MLPrediction).\
+        exists = _session.query(MLPrediction).\
                             filter_by(ACCNO = acc_no).\
                             filter_by(MODEL_NAME = model_name).\
                             filter_by(MODEL_VER = model_ver).\
@@ -238,7 +238,7 @@ def main():
     for r in results:
         if _use_db:
             hash_pred_id = hashlib.sha256(json.dumps(r, sort_keys=True, cls=MyEncoder).encode('utf-8')).hexdigest()
-            session.add(MLPrediction(   RED_ID=hash_pred_id,
+            _session.add(MLPrediction(   RED_ID=hash_pred_id,
                                         ACCNO=r['acc_no'],
                                         MODEL_NAME=r['model_name'],
                                         MODEL_VER=r['model_ver'],
@@ -247,17 +247,17 @@ def main():
                                         CATEGORY=r['category'],
                                         PROBABILITY=r['probability'] ))
             try:
-                session.commit()
+                _session.commit()
             except IntegrityError:
                 print('sqlalchemy.exc.IntegrityError: {}'.format(r))
             except InvalidRequestError:
-                session.rollback()
+                _session.rollback()
                 print('sqlalchemy.exc.InvalidRequestError: {}'.format(r))
         else:
             print(r)
 
     if _use_db:
-        session.close()
+        _session.close()
 
 if __name__ == "__main__":
     main()
