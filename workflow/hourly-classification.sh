@@ -10,7 +10,7 @@ IMG_PNG_1500_PATH=/imgsrv/png/1500
 PYTHON3=/usr/bin/python3
 FIND=/usr/bin/find
 DCM_RETRIEVER=/app/retrieve_cxr_by_datehour_dcmtk.py
-CAFFE_FORWARDER=/app/convert-then-forward.py
+CAFFE_FORWARDER=/app/convert_then_forward.py
 KERAS_PREDICTER=/app/predict_share_img.py
 PNG_CONVERTER=/app/convert_png_mp.py
 
