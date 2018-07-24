@@ -22,6 +22,7 @@ import hashlib
 
 from dcmconv import get_LUT_value, get_PIL_mode, get_rescale_params
 
+import numpy as np
 import caffe
 from cxrcaffemodel import CxrCaffeModel
 
