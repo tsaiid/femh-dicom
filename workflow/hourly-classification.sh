@@ -18,6 +18,8 @@ cd $WORKDIR
 # Start storescu
 # python3 storescu.py ------ &
 
+echo "Started at: $(TZ="Asia/Taipei" date)"
+
 # Retrieve images
 DATEHOUR=$(TZ="Asia/Taipei" date -d '1 hour ago' "+%Y-%m-%d %H")
 $PYTHON3 $DCM_RETRIEVER $DATEHOUR $DCM_TMPDIR
@@ -35,3 +37,5 @@ $PYTHON3 $PNG_CONVERTER $DCM_TMPDIR $IMG_PNG_1500_PATH 1024 0
 
 # Remove old png images > 30 days
 $FIND $IMG_PNG_1024_PATH $IMG_PNG_1500_PATH -maxdepth 1 -mtime +30 -type f -delete
+
+echo "Ended at: $(TZ="Asia/Taipei" date)"
