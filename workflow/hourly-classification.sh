@@ -3,8 +3,8 @@
 # Config
 WORKDIR=/app
 DCM_TMPDIR=/dcm_tmpdir
-IMG_PNG_1024_PATH=/imgsrv/png/1024
-IMG_PNG_1500_PATH=/imgsrv/png/1500
+IMG_PNG_1024_PATH=/imgsrv/png/new/1024
+IMG_PNG_1500_PATH=/imgsrv/png/new/1500
 
 # Script
 PYTHON3=/usr/bin/python3
