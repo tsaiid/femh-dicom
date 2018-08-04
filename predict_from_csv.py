@@ -15,23 +15,25 @@ def global_keras_init():
 
     model_path = 'models/keras/cxr-binary-classifier.h5'
     #weights_path = 'models/keras/weights/femh-224-densenet121-32-ekg.h5'
-    weights_path = 'models/keras/weights/femh-224-densenet121-32.h5'
+    #weights_path = 'models/keras/weights/femh-224-densenet121-32.h5'
+    weights_path = 'models/keras/weights/femh-224-densenet121-32-standing.h5'
     _model = load_model(model_path)
     _model.load_weights(weights_path)
 
 def do_predict(png_path):
     global _model
 
-    try: 
+    try:
         img = image.load_img(png_path, target_size = (224, 224))
         x = image.img_to_array(img)
         x = np.expand_dims(x, axis=0)
         x = preprocess_input(x)
         preds = _model.predict(x)
-    except:
+    except Exception as inst:
+        print(inst)
         preds = None
 
-    return preds[0][0] 
+    return preds[0][0] if preds else None
 
 def main():
     if len(sys.argv) is not 4:
@@ -50,7 +52,7 @@ def main():
     def _calc_prob(row):
         png_path = os.path.join(png_dirpath, row['ACCNO'] + '.png')
         res = do_predict(png_path)
-        
+
         return res or None
 
     tqdm.pandas()
