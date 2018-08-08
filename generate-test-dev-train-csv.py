@@ -23,6 +23,8 @@ def main():
     neg_dev_len = round( (neg_len - neg_test_len) * 0.2 )
     neg_train_len = neg_len - neg_test_len - neg_dev_len
 
+    df_pos = df_pos[['ACCNO']]
+    df_neg = df_neg[['ACCNO']]
     df_pos['ACCNO'] = df_pos['ACCNO'] + '.png'
     df_neg['ACCNO'] = df_neg['ACCNO'] + '.png'
 
