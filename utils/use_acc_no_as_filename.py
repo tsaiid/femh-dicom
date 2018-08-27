@@ -1,3 +1,4 @@
+import os
 from os import listdir, makedirs
 from os.path import isfile, isdir, join, exists, dirname
 import pydicom
@@ -20,7 +21,7 @@ def do_rename(filename, img_out_path):
 
 def main():
     if len(sys.argv) is not 3:
-        print("argv")
+        print("argv: img_path img_out_path")
         sys.exit(1)
 
     img_path = sys.argv[1]
@@ -30,12 +31,18 @@ def main():
     if isfile(img_path):
         do_rename(img_path, img_out_path)
     elif isdir(img_path):
-        files = listdir(img_path)
+        list_files = []
+        for root, dirs, files in os.walk(img_path):
+            for f in files:
+                list_files.append(os.path.join(root, f))
 
-        for f in files:
-            fullpath = join(img_path, f)
-            if isfile(fullpath):
-                do_rename(fullpath, img_out_path)
+        for fpath in list_files:
+            #fullpath = join(img_path, f)
+            #if isfile(fullpath):
+            try:
+                do_rename(fpath, img_out_path)
+            except:
+                print('Rename Error for {}'.format(fpath))
 
     t_end = time.time()
     t_total = t_end - t_start
