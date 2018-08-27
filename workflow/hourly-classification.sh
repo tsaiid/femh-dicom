@@ -33,7 +33,7 @@ $PYTHON3 $KERAS_PREDICTER $DCM_TMPDIR 1
 # Convert images
 ## Only need to convert 1500 png. 1024 was done with Caffe forwarding
 #$PYTHON3 $DCM_TMPDIR $IMG_PNG_1024_PATH 1024 1
-$PYTHON3 $PNG_CONVERTER $DCM_TMPDIR $IMG_PNG_1500_PATH 1024 0
+$PYTHON3 $PNG_CONVERTER $DCM_TMPDIR $IMG_PNG_1500_PATH 1500 0
 
 # Remove old png images > 30 days
 $FIND $IMG_PNG_1024_PATH $IMG_PNG_1500_PATH -maxdepth 1 -mtime +30 -type f -delete
