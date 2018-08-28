@@ -8,6 +8,9 @@ from pydicom.multival import MultiValue
 #	Code adapted from pydicom, requires numpy
 #	http://code.google.com/p/pydicom/source/browse/source/dicom/contrib/pydicom_PIL.py
 def get_LUT_value(data, window, level, rescaleIntercept=0, rescaleSlope=1):
+    if None in [window, level, rescaleIntercept, rescaleSlope]:
+        return data
+
     if isinstance(window, list) or isinstance(window, MultiValue):
         window = window[0]
     if isinstance(level, list) or isinstance(level, MultiValue):
