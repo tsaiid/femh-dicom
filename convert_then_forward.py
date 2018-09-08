@@ -6,6 +6,9 @@ import yaml
 import json
 import errno
 
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, module='skimage')
+
 import pydicom
 from pydicom.dataset import FileDataset
 
@@ -50,8 +53,7 @@ def check_if_pred_exists(acc_no, model_name, model_ver, weight_name, weight_ver,
                             filter_by(MODEL_NAME = model_name).\
                             filter_by(MODEL_VER = model_ver).\
                             filter_by(WEIGHTS_NAME = weight_name).\
-                            filter_by(WEIGHTS_VER = weight_ver).\
-                            filter_by(CATEGORY = category).scalar()
+                            filter_by(WEIGHTS_VER = weight_ver).scalar()
     except MultipleResultsFound:
         print("MultipleResultsFound: ACCNO = {}, CATEGORY = {}. Please check DB.".format(acc_no, category))
         exists = True
@@ -63,8 +65,6 @@ def do_forward(ds, png_path):
 
     results = []
     acc_no = ds.get('AccessionNumber', None)
-
-    img = caffe.io.load_image(png_path, color=False)                   #加载图片
 
     for model in _caffe_models:
         # check if exists
@@ -81,15 +81,20 @@ def do_forward(ds, png_path):
                 print("{} {} {} exists, skip.".format(acc_no, model_name, weight_name))
                 continue
 
+        model.load_net()
+        img = caffe.io.load_image(png_path, color=model.is_color())
         model.net.blobs['data'].data[...] = model.transformer.preprocess('data', img)
         res = model.net.forward()
+        model.clear_net()   # to save memory; 1 model takes up to 3 GB
+        prob = np.amax(res['loss3/prob'][0])
+        label = model.labels[np.argmax(res['loss3/prob'][0])]
         result = { 'acc_no': acc_no,
                    'model_name': model_name,
                    'model_ver': model_ver,
                    'weight_name': weight_name,
                    'weight_ver': weight_ver,
-                   'category': category,
-                   'probability': res['loss3/prob'][0][1]  }
+                   'category': category + '-' + label,
+                   'probability': prob  }
 
         results.append(result)
     return results
