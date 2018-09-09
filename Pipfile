@@ -15,6 +15,7 @@ tensorflow = "*"
 cx-oracle = "*"
 pandas = "*"
 tqdm = "*"
+numpy = "*"
 
 [dev-packages]
 
