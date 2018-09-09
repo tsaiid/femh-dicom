@@ -24,7 +24,7 @@ echo "Started at: $(TZ="Asia/Taipei" date)"
 DATEHOUR=$(TZ="Asia/Taipei" date -d '1 hour ago' "+%Y-%m-%d %H")
 $PYTHON3 $DCM_RETRIEVER $DATEHOUR $DCM_TMPDIR
 
-# Convert 1024 png and then Caffe model forwarding 
+# Convert 1024 png and then Caffe model forwarding
 $PYTHON3 $CAFFE_FORWARDER $DCM_TMPDIR $IMG_PNG_1024_PATH 1
 
 # Keras model predicting
@@ -32,8 +32,8 @@ $PYTHON3 $KERAS_PREDICTER $DCM_TMPDIR 1
 
 # Convert images
 ## Only need to convert 1500 png. 1024 was done with Caffe forwarding
-#$PYTHON3 $DCM_TMPDIR $IMG_PNG_1024_PATH 1024 1
-$PYTHON3 $PNG_CONVERTER $DCM_TMPDIR $IMG_PNG_1500_PATH 1500 0
+#$PYTHON3 $DCM_TMPDIR $IMG_PNG_1024_PATH 1024 1 0
+$PYTHON3 $PNG_CONVERTER $DCM_TMPDIR $IMG_PNG_1500_PATH 1500 0 0
 
 # Remove old png images > 30 days
 $FIND $IMG_PNG_1024_PATH $IMG_PNG_1500_PATH -maxdepth 1 -mtime +30 -type f -delete
