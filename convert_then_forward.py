@@ -15,7 +15,6 @@ from pydicom.dataset import FileDataset
 from PIL import Image
 from PIL.ImageOps import invert
 
-import cx_Oracle
 from app.mldbcls import MLPrediction
 from sqlalchemy.orm.exc import MultipleResultsFound
 from sqlalchemy.exc import IntegrityError, InvalidRequestError
