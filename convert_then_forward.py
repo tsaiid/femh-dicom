@@ -16,18 +16,18 @@ from PIL import Image
 from PIL.ImageOps import invert
 
 import cx_Oracle
-from mldbcls import MLPrediction
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from app.mldbcls import MLPrediction
 from sqlalchemy.orm.exc import MultipleResultsFound
 from sqlalchemy.exc import IntegrityError, InvalidRequestError
 import hashlib
 
-from dcmconv import get_LUT_value, get_PIL_mode, get_rescale_params
+from app.dcmconv import get_LUT_value, get_PIL_mode, get_rescale_params
 
 import numpy as np
 import caffe
-from cxrcaffemodel import CxrCaffeModel
+from app.cxrcaffemodel import CxrCaffeModel
+
+from app.femhdb import FemhDb
 
 _session = None
 _use_db = None
@@ -189,19 +189,8 @@ def main():
         cfg = yaml.load(ymlfile)
 
     if _use_db:
-        # init db engine
-        global _session
-        oracle_conn_str = 'oracle+cx_oracle://{username}:{password}@{dsn_str}'
-        dsn_str = cx_Oracle.makedsn(cfg['oracle']['ip'], cfg['oracle']['port'], cfg['oracle']['service_name']).replace('SID', 'SERVICE_NAME')
-        engine = create_engine(
-            oracle_conn_str.format(
-                username=cfg['oracle']['username'],
-                password=cfg['oracle']['password'],
-                dsn_str=dsn_str
-            )
-        )
-        Session = sessionmaker(bind=engine)
-        _session = Session()
+        db = FemhDb()
+        _session = db.session
 
     # load all models
     global_caffe_init(cfg)
