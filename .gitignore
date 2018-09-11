@@ -5,6 +5,9 @@ db/
 gh-pages/
 webapp/ssl/
 
+# Vim Swap
+*.swp
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
