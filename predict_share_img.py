@@ -1,3 +1,6 @@
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
 import pydicom
 from pydicom.dataset import FileDataset
 from PIL import Image
@@ -7,18 +10,15 @@ from keras.models import load_model
 from keras.preprocessing.image import img_to_array
 from keras.applications.densenet import preprocess_input
 import sys
-import os
 import yaml
 import json
-from cxrkerasmodel import CxrKerasModel
-from dcmconv import get_LUT_value, get_PIL_mode, get_rescale_params
+from app.cxrkerasmodel import CxrKerasModel
+from app.dcmconv import get_LUT_value, get_PIL_mode, get_rescale_params
 import hashlib
-import cx_Oracle
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from app.femhdb import FemhDb
 from sqlalchemy.orm.exc import MultipleResultsFound
 from sqlalchemy.exc import IntegrityError, InvalidRequestError
-from mldbcls import MLPrediction
+from app.mldbcls import MLPrediction
 import time
 from tqdm import tqdm
 
@@ -115,10 +115,10 @@ def do_predict(path):
     return results
 
 def check_if_pred_exists(acc_no, model_name, model_ver, weight_name, weight_ver, category):
-    global session
+    global _session
 
     try:
-        exists = session.query(MLPrediction).\
+        exists = _session.query(MLPrediction).\
                             filter_by(ACCNO = acc_no).\
                             filter_by(MODEL_NAME = model_name).\
                             filter_by(MODEL_VER = model_ver).\
@@ -132,11 +132,15 @@ def check_if_pred_exists(acc_no, model_name, model_ver, weight_name, weight_ver,
     return exists
 
 def main():
+    global _session
+    global _use_db
+    global _keras_models
+
     if len(sys.argv) is not 3:
         print("argv: target_path use_db")
         sys.exit(1)
 
-    global _use_db
+    path = sys.argv[1]
     _use_db = sys.argv[2] != '0'
 
     t_start = time.time()
@@ -147,23 +151,10 @@ def main():
         cfg = yaml.load(ymlfile)
 
     if _use_db:
-        # init db engine
-        global session
-        #db_path = cfg['sqlite']['path']
-        oracle_conn_str = 'oracle+cx_oracle://{username}:{password}@{dsn_str}'
-        dsn_str = cx_Oracle.makedsn(cfg['oracle']['ip'], cfg['oracle']['port'], cfg['oracle']['service_name']).replace('SID', 'SERVICE_NAME')
-        engine = create_engine(
-            oracle_conn_str.format(
-                username=cfg['oracle']['username'],
-                password=cfg['oracle']['password'],
-                dsn_str=dsn_str
-            )
-        )
-        Session = sessionmaker(bind=engine)
-        session = Session()
+        db = FemhDb()
+        _session = db.session
 
     # load all models
-    global _keras_models
     _keras_models = [CxrKerasModel(m, w) for m in tqdm(cfg['model'], ascii=True) for w in tqdm(m['weight'], ascii=True)]
     print('{} models loaded.'.format(len(_keras_models)))
     for i, m in enumerate(_keras_models):
@@ -172,7 +163,6 @@ def main():
     t_models_loaded = time.time()
     print("Time for loading models: ", t_models_loaded - t_start)
 
-    path = sys.argv[1]
     results = []
     if (os.path.isfile(path)):
         single_results = do_predict(path)
@@ -208,7 +198,7 @@ def main():
     for r in results:
         if _use_db:
             hash_pred_id = hashlib.sha256(json.dumps(r, sort_keys=True, cls=MyEncoder).encode('utf-8')).hexdigest()
-            session.add(MLPrediction(   RED_ID=hash_pred_id,
+            _session.add(MLPrediction(   RED_ID=hash_pred_id,
                                         ACCNO=r['acc_no'],
                                         MODEL_NAME=r['model_name'],
                                         MODEL_VER=r['model_ver'],
@@ -217,17 +207,17 @@ def main():
                                         CATEGORY=r['category'],
                                         PROBABILITY=r['probability'] ))
             try:
-                session.commit()
+                _session.commit()
             except IntegrityError:
                 print('sqlalchemy.exc.IntegrityError: {}'.format(r))
             except InvalidRequestError:
-                session.rollback()
+                _session.rollback()
                 print('sqlalchemy.exc.InvalidRequestError: {}'.format(r))
         else:
             print(r)
 
     if _use_db:
-        session.close()
+        _session.close()
 
 if __name__ == "__main__":
     main()
