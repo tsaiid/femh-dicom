@@ -62,6 +62,7 @@ def check_if_pred_exists(acc_no, model_name, model_ver, weight_name, weight_ver,
 
 def do_forward(ds, png_path):
     global _caffe_models
+    global _use_db
 
     results = []
     acc_no = ds.get('AccessionNumber', None)
@@ -74,7 +75,6 @@ def do_forward(ds, png_path):
         weight_ver = model.weight_ver
         category = model.category
 
-        global _use_db
         if _use_db:
             is_exist = check_if_pred_exists(acc_no, model_name, model_ver, weight_name, weight_ver, category)
             if is_exist:
@@ -173,6 +173,9 @@ def do_convert_then_forward(fpath, img_out_path):
     return do_forward(ds, img_out_fullpath)
 
 def main():
+    global _use_db
+    global _session
+
     if len(sys.argv) is not 4:
         print("argv: img_path img_out_path use_db")
         sys.exit(1)
