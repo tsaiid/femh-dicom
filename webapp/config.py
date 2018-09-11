@@ -8,9 +8,10 @@ class ProdConfig(Config):
     pass
 class DevConfig(Config):
     DEBUG = True
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # load cfg
-    yml_path = os.path.join('..', 'config', 'cxr.yml')
+    yml_path = os.path.join(os.path.dirname(__file__), '..', 'config', 'cxr.yml')
     with open(yml_path, 'r') as ymlfile:
         _cfg = yaml.load(ymlfile)
 

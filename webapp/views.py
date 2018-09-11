@@ -1,37 +1,11 @@
 # -*- coding: utf-8 -*-
 
-from flask import Flask, jsonify, request
+from webapp import app, db
+from flask import jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import cross_origin
-from config import DevConfig
 from sqlalchemy import text
 
-#from mldbcls import MLPrediction
-
-
-# 初始化 Flask 類別成為 instance
-app = Flask(__name__)
-app.config.from_object(DevConfig)
-db = SQLAlchemy(app)
-
-"""
-class MLPrediction(db.Model):
-    __tablename__ = 'ML_PREDICTIONS'
-
-    pred_id = db.Column(db.Integer, db.Sequence('SEQ_ML_PREDICTIONS_PRED_ID'), primary_key=True, autoincrement=True)
-    accno = db.Column(db.String(50),nullable=False)
-    model_name = db.Column(db.String(50),nullable=False)
-    model_ver = db.Column(db.String(50),nullable=False)
-    weights_name = db.Column(db.String(50),nullable=False)
-    weights_ver = db.Column(db.String(50),nullable=False)
-    category = db.Column(db.String(50),nullable=False)
-    probability = db.Column(db.Float(),nullable=False)
-
-    def __repr__(self):
-        return '<MLPrediction %r>' % self.probability
-"""
-
-# 路由和處理函式配對
 @app.route('/')
 def index():
     return 'Hello World!'
@@ -155,7 +129,3 @@ ORDER BY normal DESC
             result_dict['results'] = results_list
 
     return jsonify(result_dict)
-
-# 判斷自己執行非被當做引入的模組，因為 __name__ 這變數若被當做模組引入使用就不會是 __main__
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', ssl_context=('ssl/fullchain.pem', 'ssl/privkey.pem'))
