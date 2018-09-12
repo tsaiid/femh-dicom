@@ -3,7 +3,6 @@ os.environ["GLOG_minloglevel"] = "3"
 import sys
 import time
 import yaml
-import json
 import errno
 
 import warnings
@@ -18,7 +17,7 @@ from PIL.ImageOps import invert
 from app.mldbcls import MLPrediction
 from sqlalchemy.orm.exc import MultipleResultsFound
 from sqlalchemy.exc import IntegrityError, InvalidRequestError
-import hashlib
+from app.hashlib import hash_pred_id
 
 from app.dcmconv import get_LUT_value, get_PIL_mode, get_rescale_params
 
@@ -221,21 +220,9 @@ def main():
 
     print('{} done. {} results.'.format(img_path, len(results)))
 
-    class MyEncoder(json.JSONEncoder):
-        def default(self, obj):
-            if isinstance(obj, np.integer):
-                return int(obj)
-            elif isinstance(obj, np.floating):
-                return float(obj)
-            elif isinstance(obj, np.ndarray):
-                return obj.tolist()
-            else:
-                return super(MyEncoder, self).default(obj)
-
     for r in results:
         if _use_db:
-            hash_pred_id = hashlib.sha256(json.dumps(r, sort_keys=True, cls=MyEncoder).encode('utf-8')).hexdigest()
-            _session.add(MLPrediction(   RED_ID=hash_pred_id,
+            _session.add(MLPrediction(  RED_ID=hash_pred_id(r),
                                         ACCNO=r['acc_no'],
                                         MODEL_NAME=r['model_name'],
                                         MODEL_VER=r['model_ver'],

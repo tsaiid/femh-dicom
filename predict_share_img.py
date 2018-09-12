@@ -11,14 +11,13 @@ from keras.preprocessing.image import img_to_array
 from keras.applications.densenet import preprocess_input
 import sys
 import yaml
-import json
 from app.cxrkerasmodel import CxrKerasModel
 from app.dcmconv import get_LUT_value, get_PIL_mode, get_rescale_params
-import hashlib
 from app.femhdb import FemhDb
 from sqlalchemy.orm.exc import MultipleResultsFound
 from sqlalchemy.exc import IntegrityError, InvalidRequestError
 from app.mldbcls import MLPrediction
+from app.hashlib import hash_pred_id
 import time
 from tqdm import tqdm
 
@@ -184,21 +183,9 @@ def main():
     #print(results)
     print('{} done. {} results.'.format(path, len(results)))
 
-    class MyEncoder(json.JSONEncoder):
-        def default(self, obj):
-            if isinstance(obj, np.integer):
-                return int(obj)
-            elif isinstance(obj, np.floating):
-                return float(obj)
-            elif isinstance(obj, np.ndarray):
-                return obj.tolist()
-            else:
-                return super(MyEncoder, self).default(obj)
-
     for r in results:
         if _use_db:
-            hash_pred_id = hashlib.sha256(json.dumps(r, sort_keys=True, cls=MyEncoder).encode('utf-8')).hexdigest()
-            _session.add(MLPrediction(   RED_ID=hash_pred_id,
+            _session.add(MLPrediction(  RED_ID=hash_pred_id(r),
                                         ACCNO=r['acc_no'],
                                         MODEL_NAME=r['model_name'],
                                         MODEL_VER=r['model_ver'],
