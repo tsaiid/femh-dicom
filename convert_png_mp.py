@@ -4,7 +4,7 @@ import os
 import pydicom
 from pydicom.dataset import FileDataset
 from pydicom.multival import MultiValue
-from dcmconv import get_LUT_value, get_PIL_mode, get_rescale_params
+from app.dcmconv import get_LUT_value, get_PIL_mode, get_rescale_params
 import csv
 import numpy as np
 from PIL import Image
@@ -13,7 +13,7 @@ import sys
 import time
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
 import errno
-from mptqdm import parallel_process
+from app.mptqdm import parallel_process
 
 def read_dcm_to_image(ds_or_file):
     if isinstance(ds_or_file, FileDataset):
