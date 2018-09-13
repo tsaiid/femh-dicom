@@ -118,14 +118,14 @@ def check_if_pred_exists(acc_no, model_name, model_ver, weight_name, weight_ver,
 
     try:
         exists = _session.query(MLPrediction).\
-                            filter_by(ACCNO = acc_no).\
-                            filter_by(MODEL_NAME = model_name).\
-                            filter_by(MODEL_VER = model_ver).\
-                            filter_by(WEIGHTS_NAME = weight_name).\
-                            filter_by(WEIGHTS_VER = weight_ver).\
-                            filter_by(CATEGORY = category).scalar()
+                            filter_by(accno = acc_no).\
+                            filter_by(model_name = model_name).\
+                            filter_by(model_ver = model_ver).\
+                            filter_by(weights_name = weight_name).\
+                            filter_by(weights_ver = weight_ver).\
+                            filter_by(category = category).scalar()
     except MultipleResultsFound:
-        print("MultipleResultsFound: ACCNO = {}, CATEGORY = {}. Please check DB.".format(acc_no, category))
+        print("MultipleResultsFound: accno = {}, category = {}. Please check DB.".format(acc_no, category))
         exists = True
 
     return exists
@@ -185,14 +185,14 @@ def main():
 
     for r in results:
         if _use_db:
-            _session.add(MLPrediction(  RED_ID=hash_pred_id(r),
-                                        ACCNO=r['acc_no'],
-                                        MODEL_NAME=r['model_name'],
-                                        MODEL_VER=r['model_ver'],
-                                        WEIGHTS_NAME=r['weight_name'],
-                                        WEIGHTS_VER=r['weight_ver'],
-                                        CATEGORY=r['category'],
-                                        PROBABILITY=r['probability'] ))
+            _session.add(MLPrediction(  pred_id=hash_pred_id(r),
+                                        accno=r['acc_no'],
+                                        model_name=r['model_name'],
+                                        model_ver=r['model_ver'],
+                                        weights_name=r['weight_name'],
+                                        weights_ver=r['weight_ver'],
+                                        category=r['category'],
+                                        probability=r['probability'] ))
             try:
                 _session.commit()
             except IntegrityError:
