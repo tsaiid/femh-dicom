@@ -18,7 +18,7 @@ def get_probability(accno):
         SELECT accno, category, probability
         FROM risml_predictions
         WHERE accno='{accno}'
-        AND weights_name IN ('femh-224-32',
+        AND weights_name IN ('femh-224-32-normal',
                              'femh-224-32-ett',
                              'femh-224-32-port-a',
                              'femh-224-32-cardiomegaly')
@@ -96,7 +96,7 @@ FROM (
                 SELECT accno, weights_name, category, probability
                 FROM risml_predictions
                 WHERE
-                    weights_name IN ('femh-224-32',
+                    weights_name IN ('femh-224-32-normal',
                                      'femh-224-32-ett',
                                      'femh-224-32-port-a',
                                      'femh-224-32-cardiomegaly')
