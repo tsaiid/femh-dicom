@@ -6,20 +6,10 @@ import cx_Oracle
 from sqlalchemy import create_engine
 from retrieve_study_dcmtk import retrieve_study
 
-def try_parsing_date_hour(text):
-    try:
-        dt = datetime.strptime(text, '%Y-%m-%d %H')
-        start_date = dt.strftime('%Y-%m-%d')
-        start_hour = dt.strftime('%H')
-        return (start_date, start_hour)
-    except:
-        pass
-    raise ValueError('no valid date format found')
-
 def main():
-    if len(sys.argv) < 2:
+    if len(sys.argv) < 3:
         print
-        sys.exit("argv: output_dir")
+        sys.exit("argv: output_dir days_before")
 
     # load cfg
     yml_path = os.path.join('config', 'cxr.yml')
@@ -27,6 +17,7 @@ def main():
         cfg = yaml.load(ymlfile)
 
     output_dir = sys.argv[1]
+    days_before = int(sys.argv[2])
 
     # get worklist of cxr on the target date
     oracle_conn_str = 'oracle+cx_oracle://{username}:{password}@{dsn_str}'
@@ -57,7 +48,7 @@ FROM
             examcode IN ('RA014', 'RA015', 'RA016', 'RA017', 'RA018', 'RA021')
             AND
             examdate BETWEEN
-                TO_DATE( TO_CHAR( SYSDATE-1, 'yyyy-mm-dd' ), 'yyyy-mm-dd' )
+                TO_DATE( TO_CHAR( SYSDATE-{days_before}, 'yyyy-mm-dd' ), 'yyyy-mm-dd' )
                     AND
                 TO_DATE( TO_CHAR( SYSDATE, 'yyyy-mm-dd' ) || ' 23:59:59', 'yyyy-mm-dd hh24:mi:ss' )
             AND
@@ -67,8 +58,8 @@ FROM
         ORDER BY examdate
     ) w
 WHERE
-    ROWNUM <= 500
-    '''.format(start_date=start_date, start_hour=start_hour)
+    ROWNUM <= 1000
+    '''.format(days_before=days_before)
     results = engine_wl.execute(sql_get_worklist)
     cxr_list = [{'accno': row['accno'], 'examdate': row['examdate']} for row in results]
     cxr_total = len(cxr_list)
