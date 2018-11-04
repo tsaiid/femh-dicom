@@ -4,18 +4,20 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-pydicom = "*"
+pydicom = "==1.1.0"
 matplotlib = "*"
-opencv-python = "*"
-pillow = "*"
+opencv-python = "==3.4.2.17"
+pillow = "==5.2.0"
 deid = "*"
-sqlalchemy = "*"
-keras = "*"
-tensorflow = "*"
-cx-oracle = "*"
-pandas = "*"
-tqdm = "*"
-numpy = "*"
+tensorflow = "==1.10.1"
+pandas = "==0.23.4"
+tqdm = "==4.25.0"
+numpy = "==1.14.5"
+python-dateutil = "==2.7.3"
+SQLAlchemy = "==1.2.11"
+Keras = "==2.2.2"
+cx_Oracle = "==6.4.1"
+PyYAML = "==3.13"
 
 [dev-packages]
 
