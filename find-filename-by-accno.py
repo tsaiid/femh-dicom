@@ -20,7 +20,7 @@ def main():
                 ds = pydicom.dcmread(fullpath)
                 if accno == ds.get('AccessionNumber', None):
                     print('{}: {}'.format(accno, fullpath))
-                    break
+                    #break
 
 if __name__ == "__main__":
     main()

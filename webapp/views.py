@@ -13,23 +13,33 @@ def index():
 @app.route('/prob/<accno>')
 def get_probability(accno):
     sql = text('''
-    SELECT *
-    FROM (
-        SELECT accno, category, probability
-        FROM risml_predictions
-        WHERE accno='{accno}'
-        AND weights_name IN ('femh-224-32-normal',
-                             'femh-224-32-ett',
-                             'femh-224-32-port-a',
-                             'femh-224-32-cardiomegaly')
-    )
-    PIVOT (
-        MAX(probability)
-        FOR category IN ('cxr-normal' normal,
-                         'cxr-ett' ett,
-                         'cxr-port-a' port,
-                         'cxr-cardiomegaly' cardiomegaly)
-    )
+SELECT *
+FROM (
+  SELECT accno,
+    CASE WHEN weights_name LIKE 'femh-%'
+        THEN CONCAT('t-', category)
+        ELSE CASE WHEN category = 'cxr-abnormal' AND weights_name = 'quanta-1024-normal-30k'
+            THEN 'cxr-normal'
+            ELSE category
+        END
+    END AS conv_category,
+    CASE WHEN category = 'cxr-abnormal' AND weights_name = 'quanta-1024-normal-30k'
+        THEN 1-probability
+        ELSE probability
+    END AS conv_probability
+  FROM risml_predictions
+  WHERE accno='{accno}'
+)
+PIVOT
+(
+  MAX(conv_probability)
+  FOR (conv_category)
+  IN  ( 't-cxr-normal' t_normal,
+        't-cxr-ett' t_ett,
+        't-cxr-port-a' t_port,
+        't-cxr-cardiomegaly' t_cardiomegaly,
+        'cxr-normal' normal)
+)
     '''.format(accno=accno))
     results = db.engine.execute(sql)
     row = results.fetchone()
@@ -39,9 +49,10 @@ def get_probability(accno):
             'accno': row['accno'],
             'probabilities': {
                 'normal': str(row['normal']),
-                'ett': str(row['ett']),
-                'port': str(row['port']),
-                'cardiomegaly': str(row['cardiomegaly'])
+                't_normal': str(row['t_normal']),
+                't_ett': str(row['t_ett']),
+                't_port': str(row['t_port']),
+                't_cardiomegaly': str(row['t_cardiomegaly'])
             }
         }
     else:

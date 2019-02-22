@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import os
 os.environ["GLOG_minloglevel"] = "3"
 import pandas as pd
@@ -14,10 +17,12 @@ def global_caffe_init():
 
     caffe.set_mode_cpu()
 
-    deploy_prototxt_file_path = 'models/caffe/quanta-1024-inception-v3-normal-30k.prototxt'
-    caffe_model_file_path = 'models/caffe/quanta-1024-inception-v3-normal-30k.caffemodel'
-    #deploy_prototxt_file_path = 'models/caffe/quanta-1024-inception-v3-cardiomegaly.prototxt'
-    #caffe_model_file_path = 'models/caffe/quanta-1024-inception-v3-cardiomegaly.caffemodel'
+    #deploy_prototxt_file_path = 'models/caffe/FEMH_nofinding_0704.prototxt'
+    #caffe_model_file_path = 'models/caffe/FEMH_nofinding_0704.caffemodel'
+    #deploy_prototxt_file_path = 'models/caffe/FEMH_cardiomegaly_0607.prototxt'
+    #caffe_model_file_path = 'models/caffe/FEMH_cardiomegaly_0607.caffemodel'
+    deploy_prototxt_file_path = 'models/caffe/FEMH_lss_0829.prototxt'
+    caffe_model_file_path = 'models/caffe/FEMH_lss_0829.caffemodel'
     _net = caffe.Net(deploy_prototxt_file_path, caffe_model_file_path, caffe.TEST)
 
     #图片预处理设置
@@ -32,6 +37,7 @@ def do_forward(png_path):
     global _transformer
 
     img = caffe.io.load_image(png_path, color=False)                   #加载图片
+    #img = caffe.io.load_image(png_path, color=False)                   #加载图片
     _net.blobs['data'].data[...] = _transformer.preprocess('data', img)      #执行上面设置的图片预处理操作，并将图片载入到blob中
 
     #执行测试
@@ -50,7 +56,7 @@ def main():
     global_caffe_init()
 
     res = do_forward(png_path)
-        
+
     print(res)
 
 if __name__ == "__main__":
