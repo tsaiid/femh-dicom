@@ -41,8 +41,8 @@ def retrieve_study(cfg, acc_no, output_dir):
                                     aet=cfg['pacs']['my']['aet'], port=cfg['pacs']['my']['port'],
                                     p_id=p_id, study_uid=study_uid, series_uid=series_uid,
                                     output_dir=output_dir )
-            print(cmd_str)
-            #os.system(cmd_str)
+            #print(cmd_str)
+            os.system(cmd_str)
             print("Success. acc_no={}".format(acc_no))
         elif status.Status != 0x0:
             print("acc_no={}, status={}".format(acc_no, hex(status.Status)))
