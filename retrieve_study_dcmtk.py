@@ -1,4 +1,4 @@
-from pynetdicom3 import AE, QueryRetrievePresentationContexts
+from pynetdicom import AE, QueryRetrievePresentationContexts
 from pydicom.dataset import Dataset
 import yaml
 import os
@@ -42,7 +42,7 @@ def retrieve_study(cfg, acc_no, output_dir):
                                     p_id=p_id, study_uid=study_uid, series_uid=series_uid,
                                     output_dir=output_dir )
             print(cmd_str)
-            os.system(cmd_str)
+            #os.system(cmd_str)
             print("Success. acc_no={}".format(acc_no))
         elif status.Status != 0x0:
             print("acc_no={}, status={}".format(acc_no, hex(status.Status)))

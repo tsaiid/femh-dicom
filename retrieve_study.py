@@ -1,4 +1,4 @@
-from pynetdicom3 import AE, QueryRetrievePresentationContexts
+from pynetdicom import AE, QueryRetrievePresentationContexts
 from pydicom.dataset import Dataset
 import yaml
 import os
