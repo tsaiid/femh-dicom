@@ -43,7 +43,7 @@ FROM
             (SELECT accno, weights_name, probability FROM risml_predictions
             ) p
         ON risworklistdatas.accno = p.accno
-            AND weights_name = 'quanta-1024-normal-30k'
+            AND weights_name = 'femh-224-32-normal'
         WHERE
             examcode IN ('RA014', 'RA015', 'RA016', 'RA017', 'RA018', 'RA021')
             AND
