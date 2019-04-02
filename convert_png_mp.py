@@ -40,7 +40,8 @@ def read_dcm_to_image(ds_or_file):
     return img
 
 def do_convert(filename, img_out_path, img_out_width=1024, img_out_square=True, use_ori_fname=False):
-    ori_fname = os.path.splitext(os.path.basename(filename))[0]
+    (ori_fname, ori_fname_ext) = os.path.splitext(os.path.basename(filename))
+    ori_fname = ori_fname + ori_fname_ext if ori_fname_ext.lower() != '.png' else ori_fname
     ds = pydicom.dcmread(filename)
     img_an = ds.AccessionNumber
 
@@ -52,7 +53,7 @@ def do_convert(filename, img_out_path, img_out_width=1024, img_out_square=True, 
     ds_ri = ds.RescaleIntercept if 'RescaleIntercept' in ds else None
     ds_rs = ds.RescaleSlope if 'RescaleSlope' in ds else None
     ds_uid = ds.SOPInstanceUID if 'SOPInstanceUID' in ds else None
-    #print(filename, "AccNo:", ds_an, "PI:", ds_pi, "WW:", ds_ww, "WC:", ds_wc, "RI:", ds_ri, "RS:", ds_rs)
+    #print(filename, "AccNo:", ds_an, "PI:", ds_pi, "WW:", ds_ww, "WC:", ds_wc, "RI:", ds_ri, "RS:", ds_rs, "ori_fname:", ori_fname, "use_ori_fname:", use_ori_fname)
     out_fname = ds_an if ds_an and not use_ori_fname else ori_fname
     img_out_fullpath = join(img_out_path, out_fname + '.png')
     if not exists(dirname(img_out_fullpath)):
@@ -98,10 +99,14 @@ def main():
     t_start = time.time()
 
     if isfile(img_path):
-        do_convert(img_path, img_out_path, img_out_width, img_out_square)
+        do_convert(img_path, img_out_path, img_out_width, img_out_square, use_ori_fname)
     elif isdir(img_path):
         files = [join(img_path, f) for f in listdir(img_path) if isfile(join(img_path, f))]
-        arr = [{'filename': f, 'img_out_path': img_out_path, 'img_out_width': img_out_width, 'img_out_square': img_out_square} for f in files]
+        arr = [{'filename': f,
+                'img_out_path': img_out_path,
+                'img_out_width': img_out_width,
+                'img_out_square': img_out_square,
+                'use_ori_fname': use_ori_fname} for f in files]
         parallel_process(arr, do_convert, use_kwargs=True)
 
     t_end = time.time()
