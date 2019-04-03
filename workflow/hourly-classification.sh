@@ -3,7 +3,7 @@
 # Config
 WORKDIR=/app
 DCM_TMPDIR=/dcm_tmpdir
-DAYS_BEFORE=1
+DAYS_BEFORE=7
 USE_DB=1
 
 # Script
