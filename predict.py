@@ -117,7 +117,7 @@ def main():
     # load cfg
     yml_path = join('config', 'cxr.yml')
     with open(yml_path, 'r') as ymlfile:
-        cfg = yaml.load(ymlfile)
+        cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
 
     if _use_db:
         # init db engine

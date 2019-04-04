@@ -46,7 +46,7 @@ if __name__ == "__main__":
     # load cfg
     yml_path = os.path.join('config', 'pacs.yml')
     with open(yml_path, 'r') as ymlfile:
-        cfg = yaml.load(ymlfile)
+        cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
 
 
     #acc_no = "RA04810941530099"

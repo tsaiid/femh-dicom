@@ -35,7 +35,7 @@ def main():
     # load cfg
     yml_path = os.path.join('config', 'cxr.yml')
     with open(yml_path, 'r') as ymlfile:
-        cfg = yaml.load(ymlfile)
+        cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
 
     # parse date str
     start_date, end_date = try_parsing_date_range(sys.argv[1])

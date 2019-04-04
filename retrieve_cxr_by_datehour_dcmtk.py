@@ -24,7 +24,7 @@ def main():
     # load cfg
     yml_path = os.path.join('config', 'cxr.yml')
     with open(yml_path, 'r') as ymlfile:
-        cfg = yaml.load(ymlfile)
+        cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
 
     # parse date str
     datehour_str = sys.argv[1] + ' ' + sys.argv[2]
