@@ -14,7 +14,7 @@ def global_keras_init():
     global _model
 
     model_path = 'models/keras/cxr-binary-classifier.h5'
-    weights_path = 'models/keras/weights/fake-224-densenet121-32-nipple3k.h5'
+    weights_path = 'models/keras/weights/femh-224-densenet121-32-left-hand-best.h5'
     _model = load_model(model_path)
     _model.load_weights(weights_path)
 
@@ -27,7 +27,7 @@ def do_predict(png_path):
     x = preprocess_input(x)
     preds = _model.predict(x)
 
-    return preds 
+    return preds
 
 def main():
     if len(sys.argv) is not 2:
@@ -45,7 +45,7 @@ def main():
     print("Time for loading models: ", t_models_loaded - t_start)
 
     res = do_predict(png_path)
-        
+
     print(res)
 
     t_prediction_done = time()

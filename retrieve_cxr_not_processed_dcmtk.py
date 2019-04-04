@@ -14,7 +14,7 @@ def main():
     # load cfg
     yml_path = os.path.join('config', 'cxr.yml')
     with open(yml_path, 'r') as ymlfile:
-        cfg = yaml.load(ymlfile)
+        cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
 
     output_dir = sys.argv[1]
     days_before = int(sys.argv[2])
