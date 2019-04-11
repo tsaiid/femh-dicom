@@ -9,7 +9,7 @@ class FemhDb():
         # load cfg
         yml_path = os.path.join('config', 'cxr.yml')
         with open(yml_path, 'r') as ymlfile:
-            cfg = yaml.load(ymlfile)
+            cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
 
         oracle_conn_str = 'oracle+cx_oracle://{username}:{password}@{dsn_str}'
         dsn_str = cx_Oracle.makedsn(cfg['oracle']['ip'], cfg['oracle']['port'], cfg['oracle']['service_name']).replace('SID', 'SERVICE_NAME')
