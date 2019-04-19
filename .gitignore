@@ -1,4 +1,5 @@
 # This project
+Pipfile.lock
 config/
 models/
 db/
