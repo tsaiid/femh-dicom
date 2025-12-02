@@ -1,6 +1,6 @@
 -i https://pypi.org/simple
 click==6.7
-flask_cors==3.0.6
+flask_cors==3.0.9
 flask-sqlalchemy==2.3.2
 flask==1.0.2
 itsdangerous==0.24
